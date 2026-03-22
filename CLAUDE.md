@@ -9,14 +9,14 @@
 **GUI 프레임워크:** Tkinter (Python 내장, 설치 불필요)
 **실행:** `python main.py`
 **최초 구현 완료:** 2026-03-22
-**마지막 업데이트:** 2026-03-23 (오디오 파일 지원 추가)
+**마지막 업데이트:** 2026-03-23 (오디오 지원, 재생 버튼, 단위 '개' 통일)
 
 ---
 
 ## 요약
 
-- Python Tkinter 기반 로컬 파일 중복 탐지 데스크탑 앱 제작
-- MD5 해시(완전 동일)와 pHash(유사 이미지) 2단계 스캔 방식 적용
+- Python Tkinter 기반 로컬 파일 중복 탐지 데스크탑 앱
+- MD5 해시(완전 동일)와 pHash(유사 이미지) 2단계 스캔 방식
 - 이미지 / 영상 / 오디오 파일 지원
 - 삭제는 휴지통 이동 방식으로 안전하게 처리
 
@@ -43,30 +43,31 @@
 
 1. 앱 전체 구조 설계 및 구현 ✅
     - `scanner.py` — MD5(완전 동일) + pHash(유사 이미지) 2단계 스캔 엔진
-    - `gui/` — 폴더 선택, 진행률, 결과 목록, 썸네일 미리보기 패널 구성
+    - `gui/` — 폴더 선택, 진행률, 결과 목록, 미리보기 패널 구성
 2. 결과 화면 ✅
     - 완전 중복 / 유사 중복 탭 분리
-    - 각 파일 카드에 썸네일, 파일명, 해상도, 용량, 날짜 표시
-    - 썸네일 클릭 시 OS 기본 뷰어로 원본 열기
+    - 각 파일 카드에 썸네일(이미지), 파일명, 용량, 날짜 표시
+    - 이미지: 썸네일 클릭으로 OS 기본 뷰어 열기
+    - 영상/오디오: 재생 버튼으로 OS 기본 플레이어 열기
 3. 삭제 기능 ✅
     - 체크박스로 개별 선택 후 일괄 삭제
     - 원본 유지 버튼 — 해상도 높은 것 기준으로 나머지 자동 선택
     - 전부 삭제 버튼
     - 모든 삭제는 휴지통 이동 (복구 가능)
+    - 삭제 중 진행 다이얼로그 표시
 4. 대용량 폴더 대응 ✅
-    - 스캔 중 일시중지 / 재개 기능 추가 (590GB 폴더 스캔 대비)
+    - 스캔 중 일시중지 / 재개 기능 (590GB 폴더 스캔 대비)
     - 백그라운드 스레드로 스캔 — GUI 프리징 없음
     - 카드 50개 초과 시 일괄 처리 패널로 전환 (앱 응답 없음 방지)
-    - 삭제 중 진행 다이얼로그 (백그라운드 처리)
 5. 다중 그룹 선택 및 일괄 처리 ✅
     - Ctrl+클릭 / Shift+클릭으로 그룹 다중 선택
-    - 다중 선택 시 "원본 유지 후 나머지 삭제" 일괄 처리
-6. 파일 형식 확장 ✅
+    - 다중 선택 시 "원본 유지 후 나머지 삭제" 일괄 처리 (백그라운드)
+6. 파일 형식 지원 ✅
     - 이미지 / 영상 / 오디오 체크박스로 검색 대상 선택
     - 영상/오디오 포함 시 유사 이미지 검색 자동 비활성화
 7. 안정성 ✅
-    - `UnboundLocalError` 버그 수정
-    - 경로 탈출 방지, 네트워크 요청 없음, 위험 코드 패턴 없음 보안 검토 완료
+    - 경로 탈출 방지, 네트워크 요청 없음, 위험 코드 패턴 없음
+    - 보안 검토 절차 자동화 (코드 수정 시 매번 실행)
 
 ---
 
@@ -76,7 +77,7 @@
 
 ---
 
-## 핵심 기능 요구사항
+## 핵심 기능 명세
 
 ### 1. 폴더 선택
 - 앱 실행 시 폴더 선택 버튼 제공
@@ -88,11 +89,11 @@
 **1단계 — 완전 동일 파일 감지**
 - MD5 해시로 파일 내용이 100% 동일한 파일 그룹 찾기
 - 파일명이 달라도 내용이 같으면 중복으로 처리
-- 이미지 확장자: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.bmp`, `.tiff`, `.tif`, `.heic`
-- 영상 확장자: `.mp4`, `.mov`, `.avi`, `.mkv`, `.wmv`, `.flv`, `.m4v`, `.3gp`, `.ts`, `.mts`
-- 오디오 확장자: `.mp3`, `.wav`, `.flac`, `.aac`, `.ogg`, `.m4a`, `.wma`
+- 이미지 확장자: `.jpg` `.jpeg` `.png` `.gif` `.webp` `.bmp` `.tiff` `.tif` `.heic`
+- 영상 확장자: `.mp4` `.mov` `.avi` `.mkv` `.wmv` `.flv` `.m4v` `.3gp` `.ts` `.mts`
+- 오디오 확장자: `.mp3` `.wav` `.flac` `.aac` `.ogg` `.m4a` `.wma`
 
-**2단계 — 유사 이미지 감지**
+**2단계 — 유사 이미지 감지 (이미지 전용)**
 - Perceptual Hash (pHash) 알고리즘 사용 (`imagehash` 라이브러리)
 - 유사도 민감도를 슬라이더로 조절 가능 (해밍 거리 0~20)
   - 낮을수록 엄격 (거의 동일), 높을수록 관대 (조금 달라도 유사로 처리)
@@ -117,14 +118,15 @@
 
 **그룹 목록 (왼쪽 패널)**
 - 중복/유사 그룹을 리스트로 표시
-- 각 그룹에 파일 수, 절약 가능한 용량 표시
+- 각 그룹에 파일 수(개), 절약 가능한 용량 표시
 - 완전 중복 / 유사 중복 탭으로 구분
 - Ctrl+클릭 / Shift+클릭으로 다중 선택 가능
 
 **미리보기 (오른쪽 패널)**
 - 그룹 선택 시 해당 파일들을 캔버스 너비에 맞게 자동 줄바꿈 표시
-- 각 파일 아래에 파일명, 크기(KB/MB), 해상도(이미지), 수정일 표시
-- 썸네일 클릭 시 원본 크기로 열기 (OS 기본 뷰어 사용)
+- 이미지 카드: 썸네일, 파일명, 해상도, 용량, 날짜 / 클릭 시 OS 기본 뷰어
+- 영상 카드: 🎬 아이콘, 파일명, 용량, 날짜 / 재생 버튼으로 OS 기본 플레이어
+- 오디오 카드: 🎵 아이콘, 파일명, 용량, 날짜 / 재생 버튼으로 OS 기본 플레이어
 - **썸네일 표시** 체크박스 — 끄면 이미지 로딩 없이 파일 정보만 표시 (메모리 절약)
 - 카드 50개 초과 선택 시 일괄 처리 패널로 전환 (앱 응답 없음 방지)
 
@@ -148,7 +150,7 @@
 
 ```
 photo-duplicate-finder/
-├── main.py              # 앱 진입점, Tkinter 메인 윈도우
+├── main.py              # 앱 진입점
 ├── scanner.py           # 폴더 스캔, 해시 계산, 중복 탐지 로직
 ├── gui/
 │   ├── __init__.py
@@ -156,7 +158,7 @@ photo-duplicate-finder/
 │   ├── main_window.py   # 메인 윈도우 레이아웃 + 전역 폰트 적용
 │   ├── scan_panel.py    # 폴더 선택 + 스캔 설정 패널
 │   ├── result_panel.py  # 결과 목록 + 미리보기 패널
-│   └── preview_card.py  # 개별 파일 카드 (썸네일 + 정보 + 체크박스)
+│   └── preview_card.py  # 개별 파일 카드 (썸네일/아이콘 + 정보 + 재생/체크박스)
 ├── requirements.txt
 └── README.md
 ```
@@ -171,7 +173,7 @@ ImageHash==4.3.1      # Perceptual hashing (유사 이미지 감지)
 Send2Trash==1.8.3     # 파일을 휴지통으로 이동
 ```
 
-설치 명령어:
+설치:
 ```bash
 pip install -r requirements.txt
 ```
@@ -192,48 +194,45 @@ def get_md5(filepath):
             h.update(chunk)
     return h.hexdigest()
 
-# 유사 이미지 감지
+# 유사 이미지 감지 (이미지 파일만)
 import imagehash
 from PIL import Image
 def get_phash(filepath):
     return imagehash.phash(Image.open(filepath))
 
 # 두 이미지의 유사도 (해밍 거리, 낮을수록 비슷)
-distance = hash1 - hash2  # imagehash끼리 뺄셈으로 거리 계산
+distance = hash1 - hash2
 ```
 
 ### 스캔 흐름
 
-1. 폴더 내 지원 확장자 파일 전체 목록 수집
+1. 폴더 내 선택된 확장자 파일 목록 수집
 2. 각 파일 MD5 계산 → 동일 해시 그룹화 (진행률 0→50% or 0→100%)
-3. `similar=True`인 경우만: MD5가 다른 이미지 파일들에 대해 pHash 계산 (50→100%)
-4. Union-Find 알고리즘으로 유사 그룹화 (완료 후 "유사도 비교 중... N/M장" 상태 표시)
-5. 결과를 GUI에 전달 → indeterminate 프로그레스바로 결과 정리 중 표시
+3. `similar=True`인 경우만: MD5가 다른 이미지 파일에 대해 pHash 계산 (50→100%)
+4. Union-Find 알고리즘으로 유사 그룹화
+5. 결과를 GUI에 전달 → indeterminate 프로그레스바로 정리 중 표시
 
 ### 멀티스레딩
 
 - 스캔은 `threading.Thread`로 백그라운드 실행 (GUI 프리징 방지)
-- 진행상황은 `queue.Queue`로 메인 스레드에 전달
-- `after()` 메서드로 GUI 업데이트
+- 진행상황은 `queue.Queue`로 메인 스레드에 전달, `after()`로 GUI 업데이트
 - `_pause_event` (threading.Event)로 일시중지/재개 구현
-- 취소 시 `_pause_event.set()` 후 `_stop_event.set()` (일시중지 상태에서도 취소 가능)
+- 취소 시 `_pause_event.set()` 후 `_stop_event.set()` (일시중지 중에도 취소 가능)
 
 ---
 
 ## UX 원칙
 
-- 실수로 중요한 파일 삭제하는 것을 방지하는 것이 최우선
+- 실수로 중요한 파일을 삭제하는 것을 방지하는 것이 최우선
 - 삭제 전 항상 확인 다이얼로그 표시
 - 삭제는 반드시 휴지통으로 (복구 가능하게)
-- 원본 추천 로직은 **해상도 높은 것 > 파일 크기 큰 것 > 날짜 오래된 것** 순서로 우선
+- 원본 추천 로직: **해상도 높은 것 > 파일 크기 큰 것 > 날짜 오래된 것** 순서
 
 ---
 
 ## 보안 검토 체크리스트
 
-코드 작성 후, 그리고 기능 추가할 때마다 아래 항목을 반드시 확인할 것.
-
-### ✅ 라이브러리 & API 공식 여부 확인
+### ✅ 라이브러리 공식 여부 확인
 
 | 라이브러리 | 공식 PyPI 이름 | 공식 문서 |
 |---|---|---|
@@ -241,57 +240,37 @@ distance = hash1 - hash2  # imagehash끼리 뺄셈으로 거리 계산
 | imagehash | `ImageHash` | https://github.com/JohannesBuchner/imagehash |
 | send2trash | `Send2Trash` | https://github.com/arsenetar/send2trash |
 
-- `pip install` 시 **오타 주의** — `Pillow` vs `pillow`, `imagehash` vs `image-hash` 등 이름이 비슷한 악성 패키지 존재
-- `requirements.txt`에 **버전 고정** 필수 (`>=` 대신 `==` 권장, 예: `Pillow==10.3.0`)
+- `requirements.txt`에 **버전 고정** 필수 (`==` 사용)
 - 추가 라이브러리 도입 시 반드시 PyPI 공식 페이지 확인: https://pypi.org
 
 ### ✅ 파일 접근 보안
 
-- 이 앱은 **읽기(Read)** 와 **삭제(Trash 이동)** 만 허용 — 파일 내용 수정, 업로드, 외부 전송 코드가 있으면 안 됨
-- 파일 경로는 반드시 `pathlib.Path`로 처리 — 문자열 직접 조합 금지 (경로 탈출 공격 방지)
-- 스캔 범위는 사용자가 선택한 폴더 내부로만 제한 — `..` 상위 경로 접근 차단
-
-```python
-# 안전한 경로 처리 예시
-from pathlib import Path
-
-def is_safe_path(base_dir: Path, target: Path) -> bool:
-    return base_dir.resolve() in target.resolve().parents
-```
+- 이 앱은 **읽기(Read)** 와 **삭제(Trash 이동)** 만 허용
+- 파일 경로는 반드시 `pathlib.Path`로 처리
+- 스캔 범위는 사용자가 선택한 폴더 내부로만 제한 (`is_safe_path` 함수)
 
 ### ✅ 네트워크 통신 금지
 
-- 이 앱은 **완전 로컬 동작** — 어떤 네트워크 요청도 없어야 함
-- `requests`, `urllib`, `http`, `socket` 등 네트워크 관련 import가 있으면 즉시 제거
-- 외부 API 호출, 텔레메트리, 자동 업데이트 기능 포함 금지
+- 완전 로컬 동작 — 네트워크 요청 없음
+- `requests`, `urllib`, `http`, `socket` 관련 import 금지
 
 ### ✅ 위험 코드 패턴 금지
-
-아래 코드가 있으면 무조건 제거:
 
 ```python
 # ❌ 절대 사용 금지
 eval(...)          # 임의 코드 실행
 exec(...)          # 임의 코드 실행
 os.system(...)     # 셸 명령 실행
-subprocess.run(...)  # 외부 프로세스 실행 (필요한 경우 사유 명시)
 __import__(...)    # 동적 import
 ```
+
+- `subprocess.run`: OS 기본 뷰어/플레이어 열기 용도만 허용 (preview_card.py)
 
 ### ✅ 삭제 기능 안전장치
 
 - 파일 삭제는 반드시 `send2trash` 사용 — `os.remove()`, `Path.unlink()` 직접 삭제 금지
-- 삭제 전 확인 다이얼로그 필수 (건너뛰는 옵션 없음)
-- 삭제 실행 전 대상 파일 목록을 로그로 출력
-
-```python
-# 안전한 삭제 예시
-from send2trash import send2trash
-
-def safe_delete(filepath: Path):
-    print(f"[삭제→휴지통] {filepath}")  # 로그
-    send2trash(str(filepath))           # 휴지통으로 이동
-```
+- 삭제 전 확인 다이얼로그 필수
+- 삭제 실행 전 대상 파일 목록을 콘솔에 로그 출력
 
 ### 🚨 코드 작성/수정 후 마무리 절차 — 절대 생략 금지
 
@@ -312,8 +291,8 @@ def safe_delete(filepath: Path):
    → 마지막 업데이트 날짜 기록
 
 📦 Git commit 중...
-   → git add .
-   → git commit -m "feat/fix/refactor: [변경 내용 요약]"
+   → git add [변경된 파일들]
+   → git commit -m "feat/fix/refactor/docs: [변경 내용 요약]"
 
 🚀 Git push 중...
    → git push origin main
@@ -326,8 +305,8 @@ def safe_delete(filepath: Path):
 ## 참고사항
 
 - HEIC 파일은 `pillow-heif` 라이브러리 추가 설치 필요할 수 있음 (선택)
-- 썸네일 크기 권장: 200x200px
+- 썸네일 크기: 200×200px
 - 대용량 폴더(590GB+) 실사용 환경 기준으로 개발
-- Windows / macOS 둘 다 동작해야 함 (경로 처리 주의 — `pathlib.Path` 사용 권장)
+- Windows / macOS 둘 다 동작해야 함 (`pathlib.Path` 사용으로 경로 처리 통일)
 - 미리보기 카드 렌더링 상한: 50개 (`_MAX_RENDER_CARDS`) — 초과 시 일괄 처리 패널로 전환
 - 확인 다이얼로그 파일 목록 상한: 10개 (`_MAX_LIST`) — 초과 시 "... 외 N개"로 축약
