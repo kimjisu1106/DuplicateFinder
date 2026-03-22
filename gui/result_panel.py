@@ -82,7 +82,13 @@ class ResultPanel(tk.Frame):
                                bg='#f44336', fg='white',
                                font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'),
                                command=lambda: self._delete_selected(label))
-        delete_btn.pack(side='left')
+        delete_btn.pack(side='left', padx=(0, 6))
+
+        delete_all_btn = tk.Button(btn_row, text='전부 삭제',
+                                   bg='#b71c1c', fg='white',
+                                   font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'),
+                                   command=lambda td=tab_data: self._delete_all(td))
+        delete_all_btn.pack(side='left')
 
         # 스크롤 가능한 미리보기 영역
         canvas = tk.Canvas(right, highlightthickness=0)
@@ -143,31 +149,49 @@ class ResultPanel(tk.Frame):
         self._current_cards = []
 
         for fp in group:
-            card = PreviewCard(inner, fp,
-                               on_delete=lambda p, td=tab_data: self._on_card_deleted(td, p))
+            card = PreviewCard(inner, fp)
             card.pack(side='left', padx=6, pady=6, anchor='n')
             self._current_cards.append(card)
 
         tab_data['canvas'].yview_moveto(0)
 
-    def _on_card_deleted(self, tab_data: dict, filepath: Path):
-        """개별 카드 삭제 버튼 클릭 후 그룹 상태 갱신."""
-        self._current_cards = [c for c in self._current_cards if c.filepath != filepath]
+    def _delete_all(self, tab_data: dict):
+        """현재 그룹의 모든 파일을 휴지통으로 이동."""
+        if not self._current_cards:
+            messagebox.showinfo('선택 없음', '먼저 그룹을 선택해주세요.')
+            return
+
+        targets = [c.filepath for c in self._current_cards]
+        names = '\n'.join(f'  • {p.name}' for p in targets)
+        confirmed = messagebox.askyesno(
+            '전부 삭제 확인',
+            f'이 그룹의 모든 {len(targets)}개 파일을 휴지통으로 이동하시겠습니까?\n\n{names}\n\n'
+            '(휴지통에서 복구할 수 있습니다)',
+            icon='warning',
+        )
+        if not confirmed:
+            return
+
+        errors = []
+        for fp in targets:
+            print(f"[삭제→휴지통] {fp}")
+            try:
+                send2trash(str(fp))
+            except Exception as e:
+                errors.append(f"{fp.name}: {e}")
+
+        if errors:
+            messagebox.showerror('삭제 오류', '\n'.join(errors))
 
         sel = tab_data['listbox'].curselection()
-        if not sel:
-            return
-        group_idx = sel[0]
-        tab_data['groups'][group_idx] = [
-            fp for fp in tab_data['groups'][group_idx] if fp != filepath
-        ]
-        if len(tab_data['groups'][group_idx]) < 2:
+        if sel:
+            group_idx = sel[0]
             tab_data['groups'].pop(group_idx)
             tab_data['listbox'].delete(group_idx)
             for w in tab_data['preview_inner'].winfo_children():
                 w.destroy()
             self._current_cards = []
-        self._update_summary()
+            self._update_summary()
 
     def _auto_select(self, label: str):
         """각 그룹에서 '원본'(해상도 높은 것 > 크기 큰 것 > 날짜 오래된 것)을 제외하고 나머지 선택."""

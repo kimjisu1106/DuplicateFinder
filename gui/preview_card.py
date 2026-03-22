@@ -9,7 +9,6 @@ import tkinter as tk
 from tkinter import messagebox
 
 from PIL import Image, ImageTk
-from send2trash import send2trash
 from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
 
 THUMB_SIZE = (200, 200)
@@ -37,12 +36,11 @@ def format_size(size_bytes: int) -> str:
 class PreviewCard(tk.Frame):
     """단일 이미지 미리보기 카드 위젯."""
 
-    def __init__(self, parent, filepath: Path, on_delete=None, **kwargs):
+    def __init__(self, parent, filepath: Path, **kwargs):
         super().__init__(parent, relief='ridge', borderwidth=1, **kwargs)
         self.filepath = filepath
         self._photo = None
         self.var = tk.BooleanVar(value=False)
-        self._on_delete = on_delete  # 삭제 후 호출할 콜백
 
         self._build()
 
@@ -63,14 +61,8 @@ class PreviewCard(tk.Frame):
         tk.Label(self, text=info, font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2),
                  foreground='#666666', justify='center').pack()
 
-        # 체크박스 + 삭제 버튼
-        bottom = tk.Frame(self)
-        bottom.pack(pady=(2, 6))
-
-        tk.Checkbutton(bottom, variable=self.var, text='선택').pack(side='left', padx=(0, 4))
-        tk.Button(bottom, text='삭제', fg='white', bg='#f44336',
-                  font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1), padx=4,
-                  command=self._delete_self).pack(side='left')
+        # 체크박스
+        tk.Checkbutton(self, variable=self.var, text='선택').pack(pady=(2, 6))
 
     def _load_thumbnail(self, label: tk.Label):
         try:
@@ -103,24 +95,6 @@ class PreviewCard(tk.Frame):
         except Exception:
             pass
         return '  |  '.join(parts)
-
-    def _delete_self(self):
-        confirmed = messagebox.askyesno(
-            '삭제 확인',
-            f'이 파일을 휴지통으로 이동하시겠습니까?\n\n  {self.filepath.name}',
-            icon='warning',
-        )
-        if not confirmed:
-            return
-        print(f"[삭제→휴지통] {self.filepath}")
-        try:
-            send2trash(str(self.filepath))
-        except Exception as e:
-            messagebox.showerror('삭제 오류', str(e))
-            return
-        if self._on_delete:
-            self._on_delete(self.filepath)
-        self.destroy()
 
     def is_selected(self) -> bool:
         return self.var.get()
