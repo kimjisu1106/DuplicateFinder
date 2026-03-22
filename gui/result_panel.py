@@ -249,63 +249,134 @@ class ResultPanel(tk.Frame):
                   command=lambda: self._dismiss_group(tab_data)).pack(pady=6)
 
     def _bulk_keep_and_delete(self, tab_data: dict, group_indices: list[int]):
-        """각 그룹에서 원본 유지, 나머지 일괄 삭제 (카드 없이 직접 처리)."""
-        groups = tab_data['groups']
-
-        def score(fp: Path):
-            try:
-                stat = fp.stat()
-                size, mtime = stat.st_size, stat.st_mtime
-            except Exception:
-                size, mtime = 0, 0
-            try:
-                with Image.open(fp) as img:
-                    res = img.width * img.height
-            except Exception:
-                res = 0
-            return (res, size, -mtime)
-
-        targets = []
-        for group_idx in group_indices:
-            if group_idx >= len(groups):
-                continue
-            group = groups[group_idx]
-            best = max(range(len(group)), key=lambda i: score(group[i]))
-            targets.extend(fp for i, fp in enumerate(group) if i != best)
-
-        if not targets:
-            return
-
+        """각 그룹에서 원본 유지, 나머지 일괄 삭제 — 분석/삭제 전 과정을 백그라운드에서 처리."""
         confirmed = messagebox.askyesno(
             '일괄 삭제 확인',
-            f'{len(group_indices)}개 그룹에서 원본을 제외한 {len(targets)}개 파일을\n'
+            f'{len(group_indices)}개 그룹에서 원본을 제외한 나머지 파일을\n'
             '휴지통으로 이동하시겠습니까?\n\n(휴지통에서 복구할 수 있습니다)',
             icon='warning',
         )
         if not confirmed:
             return
 
-        def on_done(deleted, errors):
-            if errors:
-                messagebox.showerror('삭제 오류', '\n'.join(errors))
-            for group_idx in sorted(group_indices, reverse=True):
+        groups = tab_data['groups']
+        q = queue.Queue()
+
+        # 확인 직후 다이얼로그 즉시 표시
+        dlg = tk.Toplevel(self)
+        dlg.title('처리 중...')
+        dlg.resizable(False, False)
+        dlg.grab_set()
+        dlg.protocol('WM_DELETE_WINDOW', lambda: None)
+
+        tk.Label(dlg, text=f'{len(group_indices)}개 그룹 처리 중...',
+                 font=(APP_FONT_FAMILY, APP_FONT_SIZE)).pack(padx=24, pady=(16, 8))
+
+        count_var = tk.StringVar(value='')
+        tk.Label(dlg, textvariable=count_var,
+                 font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1),
+                 foreground='#555555').pack()
+
+        prog = ttk.Progressbar(dlg, mode='indeterminate', length=320)
+        prog.pack(padx=24, pady=6)
+        prog.start(12)
+
+        file_var = tk.StringVar(value='원본 파일 분석 중...')
+        tk.Label(dlg, textvariable=file_var,
+                 font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2),
+                 foreground='#888888', width=44).pack(padx=24, pady=(0, 16))
+
+        dlg.update_idletasks()
+        px = self.winfo_rootx() + self.winfo_width() // 2 - dlg.winfo_width() // 2
+        py = self.winfo_rooty() + self.winfo_height() // 2 - dlg.winfo_height() // 2
+        dlg.geometry(f'+{px}+{py}')
+
+        def _worker():
+            def score(fp):
+                try:
+                    stat = fp.stat()
+                    size, mtime = stat.st_size, stat.st_mtime
+                except Exception:
+                    size, mtime = 0, 0
+                try:
+                    with Image.open(fp) as img:
+                        res = img.width * img.height
+                except Exception:
+                    res = 0
+                return (res, size, -mtime)
+
+            # 분석 단계
+            targets = []
+            for group_idx in group_indices:
                 if group_idx >= len(groups):
                     continue
-                tab_data['groups'][group_idx] = [
-                    fp for fp in groups[group_idx] if fp not in deleted
-                ]
-                if len(tab_data['groups'][group_idx]) < 2:
-                    tab_data['groups'].pop(group_idx)
-                    tab_data['listbox'].delete(group_idx)
-            for w in tab_data['preview_inner'].winfo_children():
-                w.destroy()
-            self._current_cards = []
-            self._card_to_group = {}
-            self._group_card_frames = []
-            self._current_preview = None
-            self._update_summary()
+                group = groups[group_idx]
+                best = max(range(len(group)), key=lambda i: score(group[i]))
+                targets.extend(fp for i, fp in enumerate(group) if i != best)
 
-        self._delete_with_progress(targets, on_done)
+            if not targets:
+                q.put(('done', set(), []))
+                return
+
+            q.put(('ready', len(targets)))
+
+            # 삭제 단계
+            deleted, errors = set(), []
+            for i, fp in enumerate(targets):
+                print(f"[삭제→휴지통] {fp}")
+                try:
+                    send2trash(str(fp))
+                    deleted.add(fp)
+                except Exception as e:
+                    errors.append(f"{fp.name}: {e}")
+                q.put(('progress', i + 1, len(targets), fp.name))
+            q.put(('done', deleted, errors))
+
+        threading.Thread(target=_worker, daemon=True).start()
+
+        def _poll():
+            try:
+                while True:
+                    msg = q.get_nowait()
+                    if msg[0] == 'ready':
+                        total = msg[1]
+                        prog.stop()
+                        prog.config(mode='determinate', maximum=100)
+                        count_var.set(f'0 / {total}')
+                        file_var.set('삭제 시작...')
+                    elif msg[0] == 'progress':
+                        _, i, total, name = msg
+                        prog['value'] = i / total * 100
+                        count_var.set(f'{i} / {total}')
+                        short = name if len(name) <= 40 else name[:37] + '...'
+                        file_var.set(short)
+                    elif msg[0] == 'done':
+                        _, deleted, errors = msg
+                        dlg.destroy()
+                        if errors:
+                            messagebox.showerror('삭제 오류', '\n'.join(errors))
+                        for group_idx in sorted(group_indices, reverse=True):
+                            if group_idx >= len(groups):
+                                continue
+                            tab_data['groups'][group_idx] = [
+                                fp for fp in groups[group_idx] if fp not in deleted
+                            ]
+                            if len(tab_data['groups'][group_idx]) < 2:
+                                tab_data['groups'].pop(group_idx)
+                                tab_data['listbox'].delete(group_idx)
+                        for w in tab_data['preview_inner'].winfo_children():
+                            w.destroy()
+                        self._current_cards = []
+                        self._card_to_group = {}
+                        self._group_card_frames = []
+                        self._current_preview = None
+                        self._update_summary()
+                        return
+            except queue.Empty:
+                pass
+            dlg.after(50, _poll)
+
+        _poll()
 
     def _on_thumb_toggle(self):
         if self._current_preview:
