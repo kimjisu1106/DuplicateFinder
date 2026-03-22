@@ -45,9 +45,12 @@ class ScanPanel(tk.LabelFrame):
         tk.Label(row1, text='   검색 대상:').pack(side='left')
         self._images_var = tk.BooleanVar(value=True)
         self._videos_var = tk.BooleanVar(value=False)
+        self._audio_var = tk.BooleanVar(value=False)
         tk.Checkbutton(row1, text='이미지', variable=self._images_var,
                        command=self._on_filetype_toggle).pack(side='left', padx=(4, 0))
         tk.Checkbutton(row1, text='영상', variable=self._videos_var,
+                       command=self._on_filetype_toggle).pack(side='left', padx=(2, 0))
+        tk.Checkbutton(row1, text='오디오', variable=self._audio_var,
                        command=self._on_filetype_toggle).pack(side='left', padx=(2, 0))
 
         self._similar_var = tk.BooleanVar(value=True)
@@ -125,7 +128,7 @@ class ScanPanel(tk.LabelFrame):
     def _on_filetype_toggle(self):
         images_on = self._images_var.get()
         videos_on = self._videos_var.get()
-        if videos_on:
+        if videos_on or self._audio_var.get():
             self._similar_var.set(False)
             self._similar_cb.config(state='disabled')
             self._slider.config(state='disabled')
@@ -170,6 +173,7 @@ class ScanPanel(tk.LabelFrame):
             similar=self._similar_var.get(),
             include_images=self._images_var.get(),
             include_videos=self._videos_var.get(),
+            include_audio=self._audio_var.get(),
         )
 
     def _toggle_pause(self):

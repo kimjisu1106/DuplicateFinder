@@ -10,7 +10,9 @@ from typing import Callable
 import imagehash
 from PIL import Image
 
-SUPPORTED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.tif', '.heic'}
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.tif', '.heic'}
+VIDEO_EXTENSIONS = {'.mp4', '.mov', '.avi', '.mkv', '.wmv', '.flv', '.m4v', '.3gp', '.ts', '.mts'}
+AUDIO_EXTENSIONS = {'.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a', '.wma'}
 
 
 def is_safe_path(base_dir: Path, target: Path) -> bool:
@@ -39,12 +41,21 @@ def get_phash(filepath: Path):
         return None
 
 
-def collect_image_files(folder: Path, recursive: bool) -> list[Path]:
-    """폴더에서 지원 확장자 이미지 파일 목록을 수집."""
+def collect_files(folder: Path, recursive: bool,
+                  include_images: bool, include_videos: bool,
+                  include_audio: bool = False) -> list[Path]:
+    """폴더에서 선택된 종류의 파일 목록을 수집."""
+    exts = set()
+    if include_images:
+        exts |= IMAGE_EXTENSIONS
+    if include_videos:
+        exts |= VIDEO_EXTENSIONS
+    if include_audio:
+        exts |= AUDIO_EXTENSIONS
     pattern = '**/*' if recursive else '*'
     files = []
     for p in folder.glob(pattern):
-        if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS:
+        if p.is_file() and p.suffix.lower() in exts:
             if is_safe_path(folder, p):
                 files.append(p)
     return files
@@ -68,13 +79,15 @@ class Scanner:
         """스캔 재개."""
         self._pause_event.set()
 
-    def start(self, folder: Path, recursive: bool, threshold: int, similar: bool = True):
+    def start(self, folder: Path, recursive: bool, threshold: int,
+              similar: bool = True, include_images: bool = True,
+              include_videos: bool = False, include_audio: bool = False):
         """스캔을 백그라운드 스레드에서 시작."""
         self._stop_event.clear()
         self._pause_event.set()
         self._thread = threading.Thread(
             target=self._run,
-            args=(folder, recursive, threshold, similar),
+            args=(folder, recursive, threshold, similar, include_images, include_videos, include_audio),
             daemon=True,
         )
         self._thread.start()
@@ -86,11 +99,13 @@ class Scanner:
     def _put(self, msg_type: str, **kwargs):
         self.progress_queue.put({'type': msg_type, **kwargs})
 
-    def _run(self, folder: Path, recursive: bool, threshold: int, similar: bool = True):
+    def _run(self, folder: Path, recursive: bool, threshold: int,
+             similar: bool = True, include_images: bool = True,
+             include_videos: bool = False, include_audio: bool = False):
         try:
             # 파일 수집
-            self._put('status', message='이미지 파일 목록 수집 중...')
-            files = collect_image_files(folder, recursive)
+            self._put('status', message='파일 목록 수집 중...')
+            files = collect_files(folder, recursive, include_images, include_videos, include_audio)
             total = len(files)
             if total == 0:
                 self._put('done', exact_groups=[], similar_groups=[], total=0)
@@ -122,8 +137,9 @@ class Scanner:
                 self._put('done', exact_groups=exact_groups, similar_groups=[], total=total)
                 return
 
-            # 2단계: pHash 계산 (MD5가 다른 파일들만)
-            unique_files = [fp for fp in files if fp not in exact_set]
+            # 2단계: pHash 계산 (MD5가 다른 이미지 파일들만 — 영상 제외)
+            unique_files = [fp for fp in files
+                            if fp not in exact_set and fp.suffix.lower() in IMAGE_EXTENSIONS]
             phash_list: list[tuple[Path, any]] = []
 
             self._put('status', message='유사 이미지 분석 중...')
