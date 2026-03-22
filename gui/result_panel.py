@@ -84,12 +84,6 @@ class ResultPanel(tk.Frame):
                                command=lambda: self._delete_selected(label))
         delete_btn.pack(side='left', padx=(0, 6))
 
-        delete_all_btn = tk.Button(btn_row, text='전부 삭제',
-                                   bg='#b71c1c', fg='white',
-                                   font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'),
-                                   command=lambda td=tab_data: self._delete_all(td))
-        delete_all_btn.pack(side='left')
-
         # 스크롤 가능한 미리보기 영역
         canvas = tk.Canvas(right, highlightthickness=0)
         v_scroll = tk.Scrollbar(right, orient='vertical', command=canvas.yview)
@@ -122,6 +116,11 @@ class ResultPanel(tk.Frame):
         }
 
         listbox.bind('<<ListboxSelect>>', lambda e, td=tab_data: self._on_group_select(td))
+
+        tk.Button(btn_row, text='전부 삭제',
+                  bg='#b71c1c', fg='white',
+                  font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'),
+                  command=lambda td=tab_data: self._delete_all(td)).pack(side='left')
 
         return tab_data
 
