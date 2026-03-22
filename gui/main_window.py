@@ -2,8 +2,10 @@
 main_window.py — 메인 윈도우 레이아웃
 """
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, font as tkfont
 from pathlib import Path
+
+from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
 
 from .scan_panel import ScanPanel
 from .result_panel import ResultPanel
@@ -19,8 +21,21 @@ class MainWindow(tk.Tk):
         self.geometry('1100x740')
         self.minsize(900, 600)
 
+        self._apply_global_font()
         self._scanner = Scanner()
         self._build()
+
+    def _apply_global_font(self):
+        """모든 Tkinter 위젯의 기본 폰트를 통일."""
+        default_font = tkfont.nametofont('TkDefaultFont')
+        default_font.configure(family=APP_FONT_FAMILY, size=APP_FONT_SIZE)
+
+        for name in ('TkTextFont', 'TkFixedFont', 'TkMenuFont',
+                     'TkHeadingFont', 'TkCaptionFont', 'TkSmallCaptionFont'):
+            try:
+                tkfont.nametofont(name).configure(family=APP_FONT_FAMILY, size=APP_FONT_SIZE)
+            except Exception:
+                pass
 
     def _build(self):
         # 상단: 스캔 패널

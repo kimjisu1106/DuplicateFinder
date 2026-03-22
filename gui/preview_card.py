@@ -10,6 +10,7 @@ from tkinter import messagebox
 
 from PIL import Image, ImageTk
 from send2trash import send2trash
+from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
 
 THUMB_SIZE = (200, 200)
 
@@ -54,12 +55,12 @@ class PreviewCard(tk.Frame):
         # 파일명
         name = self.filepath.name
         display_name = name if len(name) <= 22 else name[:19] + '...'
-        tk.Label(self, text=display_name, font=('Segoe UI', 8, 'bold'),
+        tk.Label(self, text=display_name, font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1, 'bold'),
                  wraplength=200, justify='center').pack()
 
         # 메타 정보
         info = self._get_info()
-        tk.Label(self, text=info, font=('Segoe UI', 7),
+        tk.Label(self, text=info, font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2),
                  foreground='#666666', justify='center').pack()
 
         # 체크박스 + 삭제 버튼
@@ -68,7 +69,7 @@ class PreviewCard(tk.Frame):
 
         tk.Checkbutton(bottom, variable=self.var, text='선택').pack(side='left', padx=(0, 4))
         tk.Button(bottom, text='삭제', fg='white', bg='#f44336',
-                  font=('Segoe UI', 8), padx=4,
+                  font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1), padx=4,
                   command=self._delete_self).pack(side='left')
 
     def _load_thumbnail(self, label: tk.Label):

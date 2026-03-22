@@ -4,6 +4,7 @@ scan_panel.py — 폴더 선택 + 스캔 설정 패널
 import tkinter as tk
 from tkinter import ttk, filedialog
 from pathlib import Path
+from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
 
 
 class ScanPanel(tk.LabelFrame):
@@ -43,7 +44,7 @@ class ScanPanel(tk.LabelFrame):
                           command=self._on_slider, showvalue=False)
         slider.pack(side='left', padx=4)
         self._threshold_label.pack(side='left')
-        tk.Label(row1, text='← 엄격  관대 →', foreground='#888888', font=('Segoe UI', 8)).pack(side='left', padx=4)
+        tk.Label(row1, text='← 엄격  관대 →', foreground='#888888', font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1)).pack(side='left', padx=4)
 
         # 버튼 행
         row2 = tk.Frame(self)
@@ -51,7 +52,7 @@ class ScanPanel(tk.LabelFrame):
 
         self._scan_btn = tk.Button(row2, text='스캔 시작', command=self._start_scan,
                                    width=12, bg='#4CAF50', fg='white',
-                                   font=('Segoe UI', 9, 'bold'))
+                                   font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'))
         self._scan_btn.pack(side='left', padx=(0, 6))
 
         self._cancel_btn = tk.Button(row2, text='취소', command=self._cancel_scan,
@@ -69,7 +70,7 @@ class ScanPanel(tk.LabelFrame):
 
         self._status_var = tk.StringVar(value='')
         tk.Label(row3, textvariable=self._status_var, anchor='w',
-                 width=36, foreground='#555555', font=('Segoe UI', 8)).pack(side='left')
+                 width=36, foreground='#555555', font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1)).pack(side='left')
 
     def _choose_folder(self):
         path = filedialog.askdirectory(title='스캔할 폴더를 선택하세요')

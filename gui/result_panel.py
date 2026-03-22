@@ -8,6 +8,8 @@ from pathlib import Path
 from send2trash import send2trash
 from PIL import Image
 
+from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
+
 from .preview_card import PreviewCard, format_size
 
 
@@ -29,7 +31,7 @@ class ResultPanel(tk.Frame):
 
         self._summary_var = tk.StringVar(value='스캔 결과가 여기에 표시됩니다.')
         tk.Label(summary_frame, textvariable=self._summary_var,
-                 font=('Segoe UI', 9), foreground='#333333').pack(side='left')
+                 font=(APP_FONT_FAMILY, APP_FONT_SIZE), foreground='#333333').pack(side='left')
 
         # 탭 + 본문 영역
         self._notebook = ttk.Notebook(self)
@@ -52,7 +54,7 @@ class ResultPanel(tk.Frame):
         left.pack(side='left', fill='y', padx=(4, 0), pady=4)
         left.pack_propagate(False)
 
-        tk.Label(left, text='그룹 목록', font=('Segoe UI', 9, 'bold')).pack(anchor='w')
+        tk.Label(left, text='그룹 목록', font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold')).pack(anchor='w')
 
         listbox_frame = tk.Frame(left)
         listbox_frame.pack(fill='both', expand=True)
@@ -60,7 +62,7 @@ class ResultPanel(tk.Frame):
         scrollbar = tk.Scrollbar(listbox_frame, orient='vertical')
         listbox = tk.Listbox(listbox_frame, yscrollcommand=scrollbar.set,
                              selectmode='single', activestyle='none',
-                             font=('Segoe UI', 8), width=28)
+                             font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1), width=28)
         scrollbar.config(command=listbox.yview)
         scrollbar.pack(side='right', fill='y')
         listbox.pack(side='left', fill='both', expand=True)
@@ -78,7 +80,7 @@ class ResultPanel(tk.Frame):
 
         delete_btn = tk.Button(btn_row, text='선택 항목 삭제',
                                bg='#f44336', fg='white',
-                               font=('Segoe UI', 9, 'bold'),
+                               font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'),
                                command=lambda: self._delete_selected(label))
         delete_btn.pack(side='left')
 
