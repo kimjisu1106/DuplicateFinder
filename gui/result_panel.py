@@ -454,39 +454,6 @@ class ResultPanel(tk.Frame):
             for i, card in enumerate(cards):
                 card.grid(row=i // cols, column=i % cols, padx=6, pady=6, sticky='n')
 
-    def _delete_all(self, tab_data: dict):
-        """선택된 그룹(들)의 모든 파일을 휴지통으로 이동."""
-        if not self._current_cards:
-            messagebox.showinfo('선택 없음', '먼저 그룹을 선택해주세요.')
-            return
-
-        targets = [c.filepath for c in self._current_cards]
-        names = _format_file_list(targets)
-        confirmed = messagebox.askyesno(
-            '전부 삭제 확인',
-            f'선택된 그룹의 모든 {len(targets)}개 파일을 휴지통으로 이동하시겠습니까?\n\n{names}\n\n'
-            '(휴지통에서 복구할 수 있습니다)',
-            icon='warning',
-        )
-        if not confirmed:
-            return
-
-        def on_done(deleted, errors):
-            if errors:
-                messagebox.showerror('삭제 오류', '\n'.join(errors))
-            sel = tab_data['listbox'].curselection()
-            for group_idx in sorted(sel, reverse=True):
-                tab_data['groups'].pop(group_idx)
-                tab_data['listbox'].delete(group_idx)
-            for w in tab_data['preview_inner'].winfo_children():
-                w.destroy()
-            self._current_cards = []
-            self._card_to_group = {}
-            self._group_card_frames = []
-            self._update_summary()
-
-        self._delete_with_progress(targets, on_done)
-
     def _select_all(self):
         """현재 표시된 카드 전체 선택."""
         for card in self._current_cards:
