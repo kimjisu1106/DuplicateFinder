@@ -141,11 +141,31 @@ class ResultPanel(tk.Frame):
         self._current_cards = []
 
         for fp in group:
-            card = PreviewCard(inner, fp)
+            card = PreviewCard(inner, fp,
+                               on_delete=lambda p, td=tab_data: self._on_card_deleted(td, p))
             card.pack(side='left', padx=6, pady=6, anchor='n')
             self._current_cards.append(card)
 
         tab_data['canvas'].yview_moveto(0)
+
+    def _on_card_deleted(self, tab_data: dict, filepath: Path):
+        """개별 카드 삭제 버튼 클릭 후 그룹 상태 갱신."""
+        self._current_cards = [c for c in self._current_cards if c.filepath != filepath]
+
+        sel = tab_data['listbox'].curselection()
+        if not sel:
+            return
+        group_idx = sel[0]
+        tab_data['groups'][group_idx] = [
+            fp for fp in tab_data['groups'][group_idx] if fp != filepath
+        ]
+        if len(tab_data['groups'][group_idx]) < 2:
+            tab_data['groups'].pop(group_idx)
+            tab_data['listbox'].delete(group_idx)
+            for w in tab_data['preview_inner'].winfo_children():
+                w.destroy()
+            self._current_cards = []
+        self._update_summary()
 
     def _auto_select(self, label: str):
         """각 그룹에서 '원본'(해상도 높은 것 > 크기 큰 것 > 날짜 오래된 것)을 제외하고 나머지 선택."""
