@@ -337,16 +337,23 @@ class ResultPanel(tk.Frame):
                 continue
             group = groups[group_idx]
 
+            def _scroll(e, c=tab_data['canvas']):
+                c.yview_scroll(int(-1 * (e.delta / 120)), 'units')
+
             outer = tk.Frame(inner)
             outer.pack(fill='x', pady=(4, 0))
+            outer.bind('<MouseWheel>', _scroll)
 
             if multi:
-                tk.Label(outer, text=f'── 그룹 {group_idx + 1}  ({len(group)}장) ──',
-                         font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1),
-                         foreground='#888888', anchor='w').pack(fill='x', padx=6, pady=(4, 2))
+                lbl = tk.Label(outer, text=f'── 그룹 {group_idx + 1}  ({len(group)}장) ──',
+                               font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1),
+                               foreground='#888888', anchor='w')
+                lbl.pack(fill='x', padx=6, pady=(4, 2))
+                lbl.bind('<MouseWheel>', _scroll)
 
             cards_frame = tk.Frame(outer)
             cards_frame.pack(fill='x')
+            cards_frame.bind('<MouseWheel>', _scroll)
 
             cards = []
             for fp in group:
@@ -354,8 +361,7 @@ class ResultPanel(tk.Frame):
                 self._current_cards.append(card)
                 self._card_to_group[card] = group_idx
                 cards.append(card)
-                card.bind('<MouseWheel>', lambda e, c=tab_data['canvas']:
-                          c.yview_scroll(int(-1 * (e.delta / 120)), 'units'))
+                card.bind('<MouseWheel>', _scroll)
 
             self._group_card_frames.append((group_idx, cards_frame, cards))
 
