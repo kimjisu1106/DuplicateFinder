@@ -42,10 +42,19 @@ class ScanPanel(tk.LabelFrame):
         self._recursive_var = tk.BooleanVar(value=True)
         tk.Checkbutton(row1, text='하위 폴더 포함', variable=self._recursive_var).pack(side='left')
 
+        tk.Label(row1, text='   검색 대상:').pack(side='left')
+        self._images_var = tk.BooleanVar(value=True)
+        self._videos_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(row1, text='이미지', variable=self._images_var,
+                       command=self._on_filetype_toggle).pack(side='left', padx=(4, 0))
+        tk.Checkbutton(row1, text='영상', variable=self._videos_var,
+                       command=self._on_filetype_toggle).pack(side='left', padx=(2, 0))
+
         self._similar_var = tk.BooleanVar(value=True)
-        tk.Checkbutton(row1, text='유사 이미지 검색',
-                       variable=self._similar_var,
-                       command=self._on_similar_toggle).pack(side='left', padx=(12, 0))
+        self._similar_cb = tk.Checkbutton(row1, text='유사 이미지 검색',
+                                          variable=self._similar_var,
+                                          command=self._on_similar_toggle)
+        self._similar_cb.pack(side='left', padx=(12, 0))
 
         self._threshold_frame = tk.Frame(row1)
         self._threshold_frame.pack(side='left')
@@ -113,6 +122,24 @@ class ScanPanel(tk.LabelFrame):
                 display = '...' + display[-55:]
             self._folder_var.set(display)
 
+    def _on_filetype_toggle(self):
+        images_on = self._images_var.get()
+        videos_on = self._videos_var.get()
+        if videos_on:
+            self._similar_var.set(False)
+            self._similar_cb.config(state='disabled')
+            self._slider.config(state='disabled')
+            for w in self._threshold_frame.winfo_children():
+                if isinstance(w, tk.Label):
+                    w.config(foreground='#aaaaaa')
+        else:
+            self._similar_cb.config(state='normal')
+            if self._similar_var.get():
+                self._slider.config(state='normal')
+                for w in self._threshold_frame.winfo_children():
+                    if isinstance(w, tk.Label):
+                        w.config(foreground='#333333')
+
     def _on_similar_toggle(self):
         state = 'normal' if self._similar_var.get() else 'disabled'
         self._slider.config(state=state)
@@ -141,6 +168,8 @@ class ScanPanel(tk.LabelFrame):
             recursive=self._recursive_var.get(),
             threshold=self._threshold_var.get(),
             similar=self._similar_var.get(),
+            include_images=self._images_var.get(),
+            include_videos=self._videos_var.get(),
         )
 
     def _toggle_pause(self):
