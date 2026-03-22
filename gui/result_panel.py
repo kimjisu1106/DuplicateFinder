@@ -12,6 +12,14 @@ from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
 
 from .preview_card import PreviewCard, format_size
 
+_MAX_LIST = 10  # 팝업에 표시할 최대 파일 수
+
+def _format_file_list(paths: list) -> str:
+    lines = [f'  • {p.name}' for p in paths[:_MAX_LIST]]
+    if len(paths) > _MAX_LIST:
+        lines.append(f'  ... 외 {len(paths) - _MAX_LIST}개')
+    return '\n'.join(lines)
+
 
 class ResultPanel(tk.Frame):
     """스캔 결과 표시 패널 (그룹 목록 + 미리보기)."""
@@ -21,6 +29,10 @@ class ResultPanel(tk.Frame):
         self._exact_groups: list[list[Path]] = []
         self._similar_groups: list[list[Path]] = []
         self._current_cards: list[PreviewCard] = []
+        self._card_to_group: dict = {}          # card → group_idx
+        self._group_card_frames: list = []      # [(group_idx, cards_frame, cards)]
+        self._show_thumb_var = tk.BooleanVar(value=True)
+        self._current_preview: tuple | None = None  # (tab_data, group_indices)
 
         self._build()
 
@@ -32,6 +44,9 @@ class ResultPanel(tk.Frame):
         self._summary_var = tk.StringVar(value='스캔 결과가 여기에 표시됩니다.')
         tk.Label(summary_frame, textvariable=self._summary_var,
                  font=(APP_FONT_FAMILY, APP_FONT_SIZE), foreground='#333333').pack(side='left')
+        tk.Checkbutton(summary_frame, text='썸네일 표시',
+                       variable=self._show_thumb_var,
+                       command=self._on_thumb_toggle).pack(side='right')
 
         # 탭 + 본문 영역
         self._notebook = ttk.Notebook(self)
@@ -61,7 +76,7 @@ class ResultPanel(tk.Frame):
 
         scrollbar = tk.Scrollbar(listbox_frame, orient='vertical')
         listbox = tk.Listbox(listbox_frame, yscrollcommand=scrollbar.set,
-                             selectmode='single', activestyle='none',
+                             selectmode='extended', activestyle='none',
                              font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1), width=28)
         scrollbar.config(command=listbox.yview)
         scrollbar.pack(side='right', fill='y')
@@ -74,15 +89,8 @@ class ResultPanel(tk.Frame):
         btn_row = tk.Frame(right)
         btn_row.pack(fill='x', pady=(0, 4))
 
-        keep_btn = tk.Button(btn_row, text='원본 유지 (나머지 선택)',
-                             command=lambda: self._auto_select(label))
-        keep_btn.pack(side='left', padx=(0, 6))
-
-        delete_btn = tk.Button(btn_row, text='선택 항목 삭제',
-                               bg='#f44336', fg='white',
-                               font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'),
-                               command=lambda: self._delete_selected(label))
-        delete_btn.pack(side='left', padx=(0, 6))
+        tk.Button(btn_row, text='원본 유지 (나머지 선택)',
+                  command=lambda: self._auto_select(label)).pack(side='left', padx=(0, 6))
 
         # 스크롤 가능한 미리보기 영역
         canvas = tk.Canvas(right, highlightthickness=0)
@@ -99,7 +107,6 @@ class ResultPanel(tk.Frame):
             canvas.itemconfig(canvas_window, width=canvas.winfo_width())
 
         preview_inner.bind('<Configure>', on_configure)
-        canvas.bind('<Configure>', lambda e: canvas.itemconfig(canvas_window, width=e.width))
 
         # 마우스 휠
         def _on_mousewheel(e):
@@ -115,12 +122,24 @@ class ResultPanel(tk.Frame):
             'groups': [],
         }
 
+        # 캔버스 너비 변경 시 카드 재배치
+        def _on_canvas_resize(e, td=tab_data):
+            canvas.itemconfig(canvas_window, width=e.width)
+            self._relayout_cards(td)
+        canvas.bind('<Configure>', _on_canvas_resize)
+
         listbox.bind('<<ListboxSelect>>', lambda e, td=tab_data: self._on_group_select(td))
 
-        tk.Button(btn_row, text='전부 삭제',
-                  bg='#b71c1c', fg='white',
+        tk.Button(btn_row, text='전부 선택',
+                  command=lambda: self._select_all()).pack(side='left', padx=(0, 6))
+
+        tk.Button(btn_row, text='선택 항목 삭제',
+                  bg='#f44336', fg='white',
                   font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'),
-                  command=lambda td=tab_data: self._delete_all(td)).pack(side='left')
+                  command=lambda: self._delete_selected(label)).pack(side='left', padx=(0, 6))
+
+        tk.Button(btn_row, text='중복 아님',
+                  command=lambda td=tab_data: self._dismiss_group(td)).pack(side='left')
 
         return tab_data
 
@@ -135,36 +154,178 @@ class ResultPanel(tk.Frame):
         sel = tab_data['listbox'].curselection()
         if not sel:
             return
-        idx = sel[0]
-        groups = tab_data['groups']
-        if idx >= len(groups):
-            return
-        self._show_preview(tab_data, groups[idx])
+        valid = [i for i in sel if i < len(tab_data['groups'])]
+        if valid:
+            self._show_preview(tab_data, valid)
 
-    def _show_preview(self, tab_data: dict, group: list[Path]):
+    _MAX_RENDER_CARDS = 50  # 카드 렌더링 상한 (썸네일 유무 무관)
+
+    def _show_bulk_panel(self, inner, tab_data: dict, group_indices: list[int], total_files: int):
+        """카드 렌더링 없이 일괄 처리 패널 표시."""
+        n_groups = len(group_indices)
+        tk.Label(inner,
+                 text=f'{n_groups}개 그룹  /  {total_files}개 파일 선택됨\n'
+                      f'(파일이 너무 많아 미리보기를 표시하지 않습니다)',
+                 font=(APP_FONT_FAMILY, APP_FONT_SIZE),
+                 foreground='#555555', justify='center').pack(pady=(40, 16))
+
+        tk.Button(inner, text=f'원본 유지 후 나머지 삭제  ({total_files - n_groups}개 삭제 예정)',
+                  bg='#f44336', fg='white',
+                  font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'),
+                  command=lambda: self._bulk_keep_and_delete(tab_data, group_indices)).pack(pady=6)
+
+        tk.Button(inner, text=f'중복 아님  ({n_groups}개 그룹 목록에서 제거)',
+                  command=lambda: self._dismiss_group(tab_data)).pack(pady=6)
+
+    def _bulk_keep_and_delete(self, tab_data: dict, group_indices: list[int]):
+        """각 그룹에서 원본 유지, 나머지 일괄 삭제 (카드 없이 직접 처리)."""
+        groups = tab_data['groups']
+
+        def score(fp: Path):
+            try:
+                stat = fp.stat()
+                size, mtime = stat.st_size, stat.st_mtime
+            except Exception:
+                size, mtime = 0, 0
+            try:
+                with Image.open(fp) as img:
+                    res = img.width * img.height
+            except Exception:
+                res = 0
+            return (res, size, -mtime)
+
+        targets = []
+        for group_idx in group_indices:
+            if group_idx >= len(groups):
+                continue
+            group = groups[group_idx]
+            best = max(range(len(group)), key=lambda i: score(group[i]))
+            targets.extend(fp for i, fp in enumerate(group) if i != best)
+
+        if not targets:
+            return
+
+        confirmed = messagebox.askyesno(
+            '일괄 삭제 확인',
+            f'{len(group_indices)}개 그룹에서 원본을 제외한 {len(targets)}개 파일을\n'
+            '휴지통으로 이동하시겠습니까?\n\n(휴지통에서 복구할 수 있습니다)',
+            icon='warning',
+        )
+        if not confirmed:
+            return
+
+        deleted = set()
+        errors = []
+        for fp in targets:
+            print(f"[삭제→휴지통] {fp}")
+            try:
+                send2trash(str(fp))
+                deleted.add(fp)
+            except Exception as e:
+                errors.append(f"{fp.name}: {e}")
+
+        if errors:
+            messagebox.showerror('삭제 오류', '\n'.join(errors))
+
+        for group_idx in sorted(group_indices, reverse=True):
+            if group_idx >= len(groups):
+                continue
+            tab_data['groups'][group_idx] = [
+                fp for fp in groups[group_idx] if fp not in deleted
+            ]
+            if len(tab_data['groups'][group_idx]) < 2:
+                tab_data['groups'].pop(group_idx)
+                tab_data['listbox'].delete(group_idx)
+
+        for w in tab_data['preview_inner'].winfo_children():
+            w.destroy()
+        self._current_cards = []
+        self._card_to_group = {}
+        self._group_card_frames = []
+        self._current_preview = None
+        self._update_summary()
+
+    def _on_thumb_toggle(self):
+        if self._current_preview:
+            self._show_preview(*self._current_preview)
+
+    def _show_preview(self, tab_data: dict, group_indices: list[int]):
+        self._current_preview = (tab_data, group_indices)
         inner = tab_data['preview_inner']
         for w in inner.winfo_children():
             w.destroy()
         self._current_cards = []
+        self._card_to_group = {}
+        self._group_card_frames = []
 
-        for fp in group:
-            card = PreviewCard(inner, fp)
-            card.pack(side='left', padx=6, pady=6, anchor='n')
-            self._current_cards.append(card)
+        groups = tab_data['groups']
+        total_files = sum(len(groups[i]) for i in group_indices if i < len(groups))
 
+        # 너무 많으면 일괄 처리 패널 표시
+        if total_files > self._MAX_RENDER_CARDS:
+            self._show_bulk_panel(inner, tab_data, group_indices, total_files)
+            tab_data['canvas'].yview_moveto(0)
+            return
+
+        show_thumb = self._show_thumb_var.get()
+        multi = len(group_indices) > 1
+
+        for group_idx in group_indices:
+            if group_idx >= len(groups):
+                continue
+            group = groups[group_idx]
+
+            outer = tk.Frame(inner)
+            outer.pack(fill='x', pady=(4, 0))
+
+            if multi:
+                tk.Label(outer, text=f'── 그룹 {group_idx + 1}  ({len(group)}장) ──',
+                         font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1),
+                         foreground='#888888', anchor='w').pack(fill='x', padx=6, pady=(4, 2))
+
+            cards_frame = tk.Frame(outer)
+            cards_frame.pack(fill='x')
+
+            cards = []
+            for fp in group:
+                card = PreviewCard(cards_frame, fp, show_thumb=show_thumb)
+                self._current_cards.append(card)
+                self._card_to_group[card] = group_idx
+                cards.append(card)
+                card.bind('<MouseWheel>', lambda e, c=tab_data['canvas']:
+                          c.yview_scroll(int(-1 * (e.delta / 120)), 'units'))
+
+            self._group_card_frames.append((group_idx, cards_frame, cards))
+
+        self._relayout_cards(tab_data)
         tab_data['canvas'].yview_moveto(0)
 
+    def _relayout_cards(self, tab_data: dict):
+        """캔버스 너비에 맞게 카드를 여러 행으로 재배치."""
+        if not self._group_card_frames:
+            return
+        canvas = tab_data['canvas']
+        canvas.update_idletasks()
+        width = canvas.winfo_width()
+        if width < 50:
+            width = 600
+        card_width = 230
+        cols = max(1, width // card_width)
+        for _, cards_frame, cards in self._group_card_frames:
+            for i, card in enumerate(cards):
+                card.grid(row=i // cols, column=i % cols, padx=6, pady=6, sticky='n')
+
     def _delete_all(self, tab_data: dict):
-        """현재 그룹의 모든 파일을 휴지통으로 이동."""
+        """선택된 그룹(들)의 모든 파일을 휴지통으로 이동."""
         if not self._current_cards:
             messagebox.showinfo('선택 없음', '먼저 그룹을 선택해주세요.')
             return
 
         targets = [c.filepath for c in self._current_cards]
-        names = '\n'.join(f'  • {p.name}' for p in targets)
+        names = _format_file_list(targets)
         confirmed = messagebox.askyesno(
             '전부 삭제 확인',
-            f'이 그룹의 모든 {len(targets)}개 파일을 휴지통으로 이동하시겠습니까?\n\n{names}\n\n'
+            f'선택된 그룹의 모든 {len(targets)}개 파일을 휴지통으로 이동하시겠습니까?\n\n{names}\n\n'
             '(휴지통에서 복구할 수 있습니다)',
             icon='warning',
         )
@@ -183,14 +344,37 @@ class ResultPanel(tk.Frame):
             messagebox.showerror('삭제 오류', '\n'.join(errors))
 
         sel = tab_data['listbox'].curselection()
-        if sel:
-            group_idx = sel[0]
+        for group_idx in sorted(sel, reverse=True):
             tab_data['groups'].pop(group_idx)
             tab_data['listbox'].delete(group_idx)
-            for w in tab_data['preview_inner'].winfo_children():
-                w.destroy()
-            self._current_cards = []
-            self._update_summary()
+        for w in tab_data['preview_inner'].winfo_children():
+            w.destroy()
+        self._current_cards = []
+        self._card_to_group = {}
+        self._group_card_frames = []
+        self._update_summary()
+
+    def _select_all(self):
+        """현재 표시된 카드 전체 선택."""
+        for card in self._current_cards:
+            card.set_selected(True)
+            card.highlight(True)
+
+    def _dismiss_group(self, tab_data: dict):
+        """파일은 그대로 두고 선택된 그룹(들)을 목록에서 제거."""
+        sel = tab_data['listbox'].curselection()
+        if not sel:
+            messagebox.showinfo('선택 없음', '먼저 그룹을 선택해주세요.')
+            return
+        for group_idx in sorted(sel, reverse=True):
+            tab_data['groups'].pop(group_idx)
+            tab_data['listbox'].delete(group_idx)
+        for w in tab_data['preview_inner'].winfo_children():
+            w.destroy()
+        self._current_cards = []
+        self._card_to_group = {}
+        self._group_card_frames = []
+        self._update_summary()
 
     def _auto_select(self, label: str):
         """각 그룹에서 '원본'(해상도 높은 것 > 크기 큰 것 > 날짜 오래된 것)을 제외하고 나머지 선택."""
@@ -211,20 +395,26 @@ class ResultPanel(tk.Frame):
                 res = 0
             return (res, size, -mtime)
 
-        best_idx = max(range(len(self._current_cards)),
-                       key=lambda i: score(self._current_cards[i].filepath))
+        # 그룹별로 원본 선정
+        from collections import defaultdict
+        groups: dict[int, list[PreviewCard]] = defaultdict(list)
+        for card in self._current_cards:
+            groups[self._card_to_group.get(card, 0)].append(card)
 
-        for i, card in enumerate(self._current_cards):
-            card.set_selected(i != best_idx)
-            card.highlight(i != best_idx)
+        for cards in groups.values():
+            best = max(range(len(cards)), key=lambda i: score(cards[i].filepath))
+            for i, card in enumerate(cards):
+                card.set_selected(i != best)
+                card.highlight(i != best)
 
     def _delete_selected(self, label: str):
-        targets = [c.filepath for c in self._current_cards if c.is_selected()]
-        if not targets:
+        selected_cards = [c for c in self._current_cards if c.is_selected()]
+        if not selected_cards:
             messagebox.showinfo('선택 없음', '삭제할 파일을 먼저 선택해주세요.')
             return
 
-        names = '\n'.join(f'  • {p.name}' for p in targets)
+        targets = [c.filepath for c in selected_cards]
+        names = _format_file_list(targets)
         confirmed = messagebox.askyesno(
             '삭제 확인',
             f'아래 {len(targets)}개 파일을 휴지통으로 이동하시겠습니까?\n\n{names}\n\n'
@@ -235,36 +425,47 @@ class ResultPanel(tk.Frame):
             return
 
         errors = []
+        deleted_set = set()
         for fp in targets:
             print(f"[삭제→휴지통] {fp}")
             try:
                 send2trash(str(fp))
+                deleted_set.add(fp)
             except Exception as e:
                 errors.append(f"{fp.name}: {e}")
 
         if errors:
             messagebox.showerror('삭제 오류', '\n'.join(errors))
 
-        # 현재 그룹에서 삭제된 카드 제거
         tab_data = self._get_current_tab()
-        sel = tab_data['listbox'].curselection()
-        if sel:
-            group_idx = sel[0]
-            deleted_set = set(targets)
+        # 영향받은 그룹 인덱스 (내림차순으로 처리해 인덱스 밀림 방지)
+        affected = sorted(
+            {self._card_to_group[c] for c in selected_cards if c.filepath in deleted_set},
+            reverse=True,
+        )
+        removed_indices = []
+        for group_idx in affected:
             tab_data['groups'][group_idx] = [
                 fp for fp in tab_data['groups'][group_idx] if fp not in deleted_set
             ]
-            remaining = tab_data['groups'][group_idx]
-            if len(remaining) < 2:
-                # 그룹이 더 이상 중복이 아니므로 제거
+            if len(tab_data['groups'][group_idx]) < 2:
                 tab_data['groups'].pop(group_idx)
                 tab_data['listbox'].delete(group_idx)
-                for w in tab_data['preview_inner'].winfo_children():
-                    w.destroy()
-                self._current_cards = []
-                self._update_summary()
-            else:
-                self._show_preview(tab_data, remaining)
+                removed_indices.append(group_idx)
+
+        self._update_summary()
+
+        # 남은 선택 항목 기준으로 미리보기 갱신
+        remaining_sel = [i for i in tab_data['listbox'].curselection()
+                         if i < len(tab_data['groups'])]
+        if remaining_sel:
+            self._show_preview(tab_data, remaining_sel)
+        else:
+            for w in tab_data['preview_inner'].winfo_children():
+                w.destroy()
+            self._current_cards = []
+            self._card_to_group = {}
+            self._group_card_frames = []
 
     # --- 외부 호출 메서드 ---
 
@@ -324,4 +525,6 @@ class ResultPanel(tk.Frame):
         for w in self._similar_tab['preview_inner'].winfo_children():
             w.destroy()
         self._current_cards = []
+        self._card_to_group = {}
+        self._group_card_frames = []
         self._summary_var.set('스캔 결과가 여기에 표시됩니다.')

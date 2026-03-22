@@ -55,15 +55,26 @@ class Scanner:
 
     def __init__(self):
         self._stop_event = threading.Event()
+        self._pause_event = threading.Event()
+        self._pause_event.set()  # 초기값: 실행 중 (set = 멈추지 않음)
         self._thread: threading.Thread | None = None
         self.progress_queue: queue.Queue = queue.Queue()
 
-    def start(self, folder: Path, recursive: bool, threshold: int):
+    def pause(self):
+        """스캔 일시중지."""
+        self._pause_event.clear()
+
+    def resume(self):
+        """스캔 재개."""
+        self._pause_event.set()
+
+    def start(self, folder: Path, recursive: bool, threshold: int, similar: bool = True):
         """스캔을 백그라운드 스레드에서 시작."""
         self._stop_event.clear()
+        self._pause_event.set()
         self._thread = threading.Thread(
             target=self._run,
-            args=(folder, recursive, threshold),
+            args=(folder, recursive, threshold, similar),
             daemon=True,
         )
         self._thread.start()
@@ -75,7 +86,7 @@ class Scanner:
     def _put(self, msg_type: str, **kwargs):
         self.progress_queue.put({'type': msg_type, **kwargs})
 
-    def _run(self, folder: Path, recursive: bool, threshold: int):
+    def _run(self, folder: Path, recursive: bool, threshold: int, similar: bool = True):
         try:
             # 파일 수집
             self._put('status', message='이미지 파일 목록 수집 중...')
@@ -88,12 +99,15 @@ class Scanner:
             self._put('total', count=total)
 
             # 1단계: MD5 계산
+            # 유사 검색 있으면 2단계와 합쳐 100%가 되도록 total*2 사용, 없으면 total 그대로
+            est_total = total * 2 if similar else total
             md5_map: dict[str, list[Path]] = {}
             for i, fp in enumerate(files):
+                self._pause_event.wait()  # 일시중지 중이면 여기서 대기
                 if self._stop_event.is_set():
                     self._put('cancelled')
                     return
-                self._put('progress', current=i + 1, total=total, filename=fp.name)
+                self._put('progress', current=i + 1, total=est_total, filename=fp.name)
                 try:
                     h = get_md5(fp)
                     md5_map.setdefault(h, []).append(fp)
@@ -103,17 +117,23 @@ class Scanner:
             exact_groups = [paths for paths in md5_map.values() if len(paths) > 1]
             exact_set = {fp for group in exact_groups for fp in group}
 
+            if not similar:
+                # 유사 이미지 검색 생략
+                self._put('done', exact_groups=exact_groups, similar_groups=[], total=total)
+                return
+
             # 2단계: pHash 계산 (MD5가 다른 파일들만)
             unique_files = [fp for fp in files if fp not in exact_set]
             phash_list: list[tuple[Path, any]] = []
 
             self._put('status', message='유사 이미지 분석 중...')
-            offset = len(files) - len(unique_files)
+            grand_total = total + len(unique_files)
             for i, fp in enumerate(unique_files):
+                self._pause_event.wait()  # 일시중지 중이면 여기서 대기
                 if self._stop_event.is_set():
                     self._put('cancelled')
                     return
-                self._put('progress', current=offset + i + 1, total=total, filename=fp.name)
+                self._put('progress', current=total + i + 1, total=grand_total, filename=fp.name)
                 ph = get_phash(fp)
                 if ph is not None:
                     phash_list.append((fp, ph))
@@ -131,11 +151,15 @@ class Scanner:
             def union(x, y):
                 parent[find(x)] = find(y)
 
+            self._put('status', message=f'유사도 비교 중... (0 / {n}장)')
             for i in range(n):
+                self._pause_event.wait()  # 일시중지 중이면 여기서 대기
+                if self._stop_event.is_set():
+                    self._put('cancelled')
+                    return
+                if i % 50 == 0:
+                    self._put('status', message=f'유사도 비교 중... ({i} / {n}장)')
                 for j in range(i + 1, n):
-                    if self._stop_event.is_set():
-                        self._put('cancelled')
-                        return
                     dist = phash_list[i][1] - phash_list[j][1]
                     if dist <= threshold:
                         union(i, j)

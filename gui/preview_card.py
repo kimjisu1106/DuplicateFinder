@@ -36,19 +36,25 @@ def format_size(size_bytes: int) -> str:
 class PreviewCard(tk.Frame):
     """단일 이미지 미리보기 카드 위젯."""
 
-    def __init__(self, parent, filepath: Path, **kwargs):
+    def __init__(self, parent, filepath: Path, show_thumb: bool = True, **kwargs):
         super().__init__(parent, relief='ridge', borderwidth=1, **kwargs)
         self.filepath = filepath
         self._photo = None
         self.var = tk.BooleanVar(value=False)
+        self._show_thumb = show_thumb
 
         self._build()
 
     def _build(self):
         # 썸네일
-        thumb_label = tk.Label(self, cursor='hand2', background='#2b2b2b')
-        thumb_label.pack(padx=4, pady=(6, 2))
-        self._load_thumbnail(thumb_label)
+        if self._show_thumb:
+            thumb_label = tk.Label(self, cursor='hand2', background='#2b2b2b')
+            thumb_label.pack(padx=4, pady=(6, 2))
+            self._load_thumbnail(thumb_label)
+        else:
+            tk.Label(self, text='🖼', font=(APP_FONT_FAMILY, 24),
+                     cursor='hand2', foreground='#aaaaaa').pack(padx=4, pady=(6, 2),
+                     ipadx=60, ipady=40)
 
         # 파일명
         name = self.filepath.name

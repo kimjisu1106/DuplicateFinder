@@ -43,6 +43,7 @@ class MainWindow(tk.Tk):
             self,
             on_scan=self._on_scan,
             on_cancel=self._on_cancel,
+            on_pause=self._on_pause,
         )
         self._scan_panel.pack(fill='x', padx=10, pady=(10, 4))
 
@@ -50,13 +51,25 @@ class MainWindow(tk.Tk):
         self._result_panel = ResultPanel(self)
         self._result_panel.pack(fill='both', expand=True, padx=10, pady=(4, 10))
 
-    def _on_scan(self, folder: Path, recursive: bool, threshold: int):
+    def _on_scan(self, folder: Path, recursive: bool, threshold: int, similar: bool):
         self._result_panel.clear()
         self._scan_panel.set_scanning(True)
-        self._scanner.start(folder, recursive, threshold)
+        self._scanner.start(folder, recursive, threshold, similar)
         self._poll_queue()
 
+    def _finish_scan(self, exact_groups, similar_groups, total):
+        self._result_panel.show_results(exact_groups, similar_groups, total)
+        self._scan_panel.set_processing(False)
+        self._scan_panel.set_status('스캔 완료!')
+
+    def _on_pause(self, is_paused: bool):
+        if is_paused:
+            self._scanner.pause()
+        else:
+            self._scanner.resume()
+
     def _on_cancel(self):
+        self._scanner.resume()  # 일시중지 상태에서도 취소 가능하도록
         self._scanner.stop()
         self._scan_panel.set_scanning(False)
         self._scan_panel.set_status('스캔이 취소되었습니다.')
@@ -81,13 +94,11 @@ class MainWindow(tk.Tk):
 
                 elif mtype == 'done':
                     self._scan_panel.set_scanning(False)
-                    self._scan_panel.update_progress(1, 1, '')
-                    self._scan_panel.set_status('스캔 완료!')
-                    self._result_panel.show_results(
-                        msg['exact_groups'],
-                        msg['similar_groups'],
-                        msg['total'],
-                    )
+                    self._scan_panel.set_processing(True)
+                    exact = msg['exact_groups']
+                    similar = msg['similar_groups']
+                    total = msg['total']
+                    self.after(50, lambda: self._finish_scan(exact, similar, total))
                     return
 
                 elif mtype == 'cancelled':
