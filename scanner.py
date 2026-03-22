@@ -167,14 +167,14 @@ class Scanner:
             def union(x, y):
                 parent[find(x)] = find(y)
 
-            self._put('status', message=f'유사도 비교 중... (0 / {n}장)')
+            self._put('status', message=f'유사도 비교 중... (0 / {n}개)')
             for i in range(n):
                 self._pause_event.wait()  # 일시중지 중이면 여기서 대기
                 if self._stop_event.is_set():
                     self._put('cancelled')
                     return
                 if i % 50 == 0:
-                    self._put('status', message=f'유사도 비교 중... ({i} / {n}장)')
+                    self._put('status', message=f'유사도 비교 중... ({i} / {n}개)')
                 for j in range(i + 1, n):
                     dist = phash_list[i][1] - phash_list[j][1]
                     if dist <= threshold:

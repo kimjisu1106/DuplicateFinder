@@ -416,7 +416,7 @@ class ResultPanel(tk.Frame):
             outer.bind('<MouseWheel>', _scroll)
 
             if multi:
-                lbl = tk.Label(outer, text=f'── 그룹 {group_idx + 1}  ({len(group)}장) ──',
+                lbl = tk.Label(outer, text=f'── 그룹 {group_idx + 1}  ({len(group)}개) ──',
                                font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1),
                                foreground='#888888', anchor='w')
                 lbl.pack(fill='x', padx=6, pady=(4, 2))
@@ -607,9 +607,9 @@ class ResultPanel(tk.Frame):
             try:
                 total_size = sum(p.stat().st_size for p in group)
                 savings = sum(p.stat().st_size for p in group[1:])
-                lb.insert('end', f"그룹 {i+1}  ({len(group)}장, -{format_size(savings)})")
+                lb.insert('end', f"그룹 {i+1}  ({len(group)}개, -{format_size(savings)})")
             except Exception:
-                lb.insert('end', f"그룹 {i+1}  ({len(group)}장)")
+                lb.insert('end', f"그룹 {i+1}  ({len(group)}개)")
 
         for w in tab_data['preview_inner'].winfo_children():
             w.destroy()
@@ -632,7 +632,7 @@ class ResultPanel(tk.Frame):
         savings = calc_savings(self._exact_tab['groups']) + calc_savings(self._similar_tab['groups'])
         msg = f"완전 중복 {e}그룹 · 유사 중복 {s}그룹 · 절약 가능 {format_size(savings)}"
         if total is not None:
-            msg = f"전체 {total}장 스캔 완료 — " + msg
+            msg = f"전체 {total}개 스캔 완료 — " + msg
         self._summary_var.set(msg)
 
     def clear(self):
