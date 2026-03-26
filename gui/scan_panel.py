@@ -3,6 +3,7 @@ scan_panel.py — 폴더 선택 + 스캔 설정 패널
 """
 import time
 import tkinter as tk
+import webbrowser
 from tkinter import ttk, filedialog
 from pathlib import Path
 from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
@@ -73,6 +74,13 @@ class ScanPanel(tk.LabelFrame):
         tk.Label(self._threshold_frame, text='← 엄격  관대 →', foreground='#888888',
                  font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1)).pack(side='left', padx=4)
 
+        bmc = tk.Label(row1, text='☕후원하기 Buy me a coffee', cursor='hand2',
+                       background='#FFDD00', foreground='#000000',
+                       font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1, 'bold'),
+                       padx=8, pady=3, relief='flat')
+        bmc.pack(side='right', padx=(8, 0))
+        bmc.bind('<Button-1>', lambda e: webbrowser.open('https://www.paypal.com/ncp/payment/RJZFK9X53AD4G'))
+
         # 버튼 행
         row2 = tk.Frame(self)
         row2.pack(fill='x', pady=(4, 0))
@@ -117,7 +125,9 @@ class ScanPanel(tk.LabelFrame):
                  foreground='#888888', font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2)).pack(side='left')
 
     def _choose_folder(self):
-        path = filedialog.askdirectory(title='스캔할 폴더를 선택하세요')
+        path = filedialog.askdirectory(title='스캔할 폴더를 선택하세요',
+                                       initialdir=Path.home(),
+                                       mustexist=True)
         if path:
             self._folder = Path(path)
             display = str(self._folder)

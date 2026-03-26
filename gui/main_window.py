@@ -106,6 +106,7 @@ class MainWindow(tk.Tk):
                 elif mtype == 'cancelled':
                     self._scan_panel.set_scanning(False)
                     self._scan_panel.set_status('취소됨')
+                    self.after(1500, self._scan_panel.reset_progress)
                     return
 
                 elif mtype == 'error':
