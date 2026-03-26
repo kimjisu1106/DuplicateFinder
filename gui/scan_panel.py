@@ -197,7 +197,7 @@ class ScanPanel(tk.LabelFrame):
                        font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1, 'bold'),
                        padx=8, pady=3, relief='flat')
         bmc.pack(side='right', padx=(8, 0))
-        bmc.bind('<Button-1>', lambda e: webbrowser.open('https://www.paypal.com/ncp/payment/RJZFK9X53AD4G'))
+        bmc.bind('<Button-1>', lambda e: webbrowser.open('https://kimlog0415.github.io/contact/'))
 
         # 버튼 행
         row2 = tk.Frame(self)
