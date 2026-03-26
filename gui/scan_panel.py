@@ -4,9 +4,127 @@ scan_panel.py — 폴더 선택 + 스캔 설정 패널
 import time
 import tkinter as tk
 import webbrowser
-from tkinter import ttk, filedialog
+from tkinter import ttk
 from pathlib import Path
 from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
+
+
+def _ask_folder(parent, title: str = '폴더 선택', initialdir: Path = None) -> str | None:
+    """더블클릭으로 하위폴더 없는 폴더를 바로 선택할 수 있는 커스텀 폴더 선택 다이얼로그."""
+    root_path = [initialdir or Path.home()]
+    selected  = [None]
+    result    = [None]
+
+    def subfolders(p: Path) -> list[Path]:
+        try:
+            return sorted([x for x in p.iterdir() if x.is_dir()],
+                          key=lambda x: x.name.lower())
+        except PermissionError:
+            return []
+
+    dlg = tk.Toplevel(parent)
+    dlg.title(title)
+    dlg.geometry('560x440')
+    dlg.resizable(True, True)
+    dlg.grab_set()
+
+    # 상단: 현재 경로 + 위로 버튼
+    top = tk.Frame(dlg)
+    top.pack(fill='x', padx=8, pady=(8, 4))
+    tk.Button(top, text='▲ 위로', width=8,
+              command=lambda: _navigate(root_path[0].parent)).pack(side='left', padx=(0, 6))
+    path_var = tk.StringVar()
+    path_entry = tk.Entry(top, textvariable=path_var, foreground='#333333')
+    path_entry.pack(side='left', fill='x', expand=True)
+    path_entry.bind('<Return>', lambda _e: _navigate(Path(path_var.get())))
+
+    # 트리뷰
+    mid = tk.Frame(dlg)
+    mid.pack(fill='both', expand=True, padx=8, pady=4)
+    sb = tk.Scrollbar(mid, orient='vertical')
+    sb.pack(side='right', fill='y')
+    tree = ttk.Treeview(mid, yscrollcommand=sb.set, selectmode='browse', show='tree')
+    tree.pack(side='left', fill='both', expand=True)
+    sb.config(command=tree.yview)
+
+    # 하단 버튼
+    bot = tk.Frame(dlg)
+    bot.pack(fill='x', padx=8, pady=(4, 8))
+    ok_btn = tk.Button(bot, text='확인', width=8, bg='#4CAF50', fg='white', state='disabled',
+                       command=lambda: _confirm())
+    ok_btn.pack(side='right', padx=(4, 0))
+    tk.Button(bot, text='취소', width=8, command=dlg.destroy).pack(side='right')
+
+    def _populate(path: Path):
+        tree.delete(*tree.get_children())
+        path_var.set(str(path))
+        for folder in subfolders(path):
+            node = tree.insert('', 'end', text=f'📁  {folder.name}', values=[str(folder)])
+            if subfolders(folder):
+                tree.insert(node, 'end', text='', values=['__dummy__'])
+
+    def _navigate(path: Path):
+        if not path.exists():
+            return
+        root_path[0] = path
+        selected[0] = None
+        ok_btn.config(state='disabled')
+        _populate(path)
+
+    def _on_select(event):
+        sel = tree.selection()
+        if not sel:
+            return
+        val = tree.item(sel[0])['values']
+        if val and val[0] != '__dummy__':
+            selected[0] = Path(val[0])
+            ok_btn.config(state='normal')
+
+    def _on_double(event):
+        sel = tree.selection()
+        if not sel:
+            return
+        val = tree.item(sel[0])['values']
+        if not val or val[0] == '__dummy__':
+            return
+        path = Path(val[0])
+        if subfolders(path):
+            _navigate(path)
+        else:
+            selected[0] = path
+            _confirm()
+
+    def _on_expand(event):
+        node = tree.focus()
+        children = tree.get_children(node)
+        if children and tree.item(children[0])['values'] == ['__dummy__']:
+            tree.delete(children[0])
+            path = Path(tree.item(node)['values'][0])
+            for folder in subfolders(path):
+                child = tree.insert(node, 'end', text=f'📁  {folder.name}', values=[str(folder)])
+                if subfolders(folder):
+                    tree.insert(child, 'end', text='', values=['__dummy__'])
+
+    def _confirm():
+        if selected[0]:
+            result[0] = str(selected[0])
+        dlg.destroy()
+
+    tree.bind('<<TreeviewSelect>>', _on_select)
+    tree.bind('<Double-1>', _on_double)
+    tree.bind('<<TreeviewOpen>>', _on_expand)
+
+    _populate(root_path[0])
+    dlg.update_idletasks()
+    dw, dh = dlg.winfo_width(), dlg.winfo_height()
+    px = parent.winfo_rootx() + parent.winfo_width()  // 2 - dw // 2
+    py = parent.winfo_rooty() + parent.winfo_height() // 2 - dh // 2
+    sw, sh = dlg.winfo_screenwidth(), dlg.winfo_screenheight()
+    px = max(0, min(px, sw - dw))
+    py = max(0, min(py, sh - dh))
+    dlg.geometry(f'+{px}+{py}')
+    dlg.wait_window()
+    return result[0]
 
 
 class ScanPanel(tk.LabelFrame):
@@ -125,9 +243,7 @@ class ScanPanel(tk.LabelFrame):
                  foreground='#888888', font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2)).pack(side='left')
 
     def _choose_folder(self):
-        path = filedialog.askdirectory(title='스캔할 폴더를 선택하세요',
-                                       initialdir=Path.home(),
-                                       mustexist=True)
+        path = _ask_folder(self, title='스캔할 폴더를 선택하세요', initialdir=Path.home())
         if path:
             self._folder = Path(path)
             display = str(self._folder)

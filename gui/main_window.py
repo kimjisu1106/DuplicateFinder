@@ -17,7 +17,7 @@ class MainWindow(tk.Tk):
 
     def __init__(self):
         super().__init__()
-        self.title('📸 Photo Duplicate Finder')
+        self.title('Duplicate Finder')
         self.geometry('1100x740')
         self.minsize(900, 600)
 
