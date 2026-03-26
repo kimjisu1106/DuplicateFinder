@@ -4,7 +4,7 @@ scan_panel.py — 폴더 선택 + 스캔 설정 패널
 import time
 import tkinter as tk
 import webbrowser
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from pathlib import Path
 from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
 
@@ -281,7 +281,7 @@ class ScanPanel(tk.LabelFrame):
 
     def _start_scan(self):
         if self._folder is None:
-            tk.messagebox.showwarning('폴더 미선택', '스캔할 폴더를 먼저 선택해주세요.')
+            messagebox.showwarning('폴더 미선택', '스캔할 폴더를 먼저 선택해주세요.')
             return
         self._scan_btn.config(state='disabled')
         self._cancel_btn.config(state='normal')

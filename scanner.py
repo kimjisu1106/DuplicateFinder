@@ -5,7 +5,7 @@ import hashlib
 import threading
 import queue
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 import imagehash
 from PIL import Image
@@ -140,7 +140,7 @@ class Scanner:
             # 2단계: pHash 계산 (MD5가 다른 이미지 파일들만 — 영상 제외)
             unique_files = [fp for fp in files
                             if fp not in exact_set and fp.suffix.lower() in IMAGE_EXTENSIONS]
-            phash_list: list[tuple[Path, any]] = []
+            phash_list: list[tuple[Path, Any]] = []
 
             self._put('status', message='유사 이미지 분석 중...')
             grand_total = total + len(unique_files)
