@@ -9,7 +9,7 @@
 **GUI 프레임워크:** Tkinter (Python 내장, 설치 불필요)
 **실행:** `python main.py`
 **최초 구현 완료:** 2026-03-22
-**마지막 업데이트:** 2026-03-26 (PayPal 후원 버튼, 취소 시 진행바 초기화, 커스텀 폴더 선택 다이얼로그)
+**마지막 업데이트:** 2026-03-27 (i18n 한/영 전환 기능)
 
 ---
 
@@ -78,13 +78,9 @@
 
 ## 다음에 할 일
 
-1. **다국어 지원 (i18n)** — 한국어 / 영어 전환 기능
-   - `gui/i18n.py` 생성 — 한/영 텍스트 딕셔너리 + `t()` 함수
-   - 모든 UI 파일의 하드코딩된 텍스트를 `t()` 호출로 교체
-   - 메인 윈도우에 언어 전환 버튼 추가
-2. **README 스크린샷 추가** — 실제 앱 화면 캡처 후 삽입
-3. **GitHub repo public 전환** — README 완성 후
-4. **.exe 배포** — PyInstaller로 패키징 후 블로그 포스팅
+1. **README 스크린샷 추가** — 실제 앱 화면 캡처 후 삽입
+2. **GitHub repo public 전환** — README 완성 후
+3. **.exe 배포** — PyInstaller로 패키징 후 블로그 포스팅
 
 ---
 
@@ -169,7 +165,8 @@ photo-duplicate-finder/
 ├── gui/
 │   ├── __init__.py
 │   ├── theme.py         # 전역 폰트/색상 설정 (APP_FONT_FAMILY, APP_FONT_SIZE)
-│   ├── main_window.py   # 메인 윈도우 레이아웃 + 전역 폰트 적용
+│   ├── i18n.py          # 한/영 텍스트 딕셔너리 + t() 함수 + set_language()
+│   ├── main_window.py   # 메인 윈도우 레이아웃 + 언어 전환 버튼
 │   ├── scan_panel.py    # 폴더 선택 + 스캔 설정 패널
 │   ├── result_panel.py  # 결과 목록 + 미리보기 패널
 │   └── preview_card.py  # 개별 파일 카드 (썸네일/아이콘 + 정보 + 재생/체크박스)

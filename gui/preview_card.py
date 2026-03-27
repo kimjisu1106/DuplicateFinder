@@ -11,6 +11,7 @@ from tkinter import messagebox
 
 from PIL import Image, ImageTk
 from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
+from .i18n import t
 
 THUMB_SIZE = (200, 200)
 
@@ -77,11 +78,11 @@ class PreviewCard(tk.Frame):
 
         # 영상/오디오: 재생 버튼
         if self._is_video() or self._is_audio():
-            tk.Button(self, text='▶  재생', command=lambda: open_with_default_viewer(self.filepath),
+            tk.Button(self, text=t('btn_play'), command=lambda: open_with_default_viewer(self.filepath),
                       width=10).pack(pady=(4, 2))
 
         # 체크박스
-        tk.Checkbutton(self, variable=self.var, text='선택').pack(pady=(2, 6))
+        tk.Checkbutton(self, variable=self.var, text=t('cb_select')).pack(pady=(2, 6))
 
     def _build_image_thumb(self):
         if self._show_thumb:
@@ -116,7 +117,7 @@ class PreviewCard(tk.Frame):
             label.config(image=self._photo)
             label.bind('<Button-1>', lambda e: open_with_default_viewer(self.filepath))
         except Exception:
-            label.config(text='미리보기\n불가', width=28, height=12,
+            label.config(text=t('label_no_preview'), width=28, height=12,
                          relief='sunken', foreground='#888888')
 
     def _get_info(self) -> str:

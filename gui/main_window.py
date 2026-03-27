@@ -6,7 +6,7 @@ from tkinter import messagebox, font as tkfont
 from pathlib import Path
 
 from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
-
+from .i18n import t, set_language, get_language
 from .scan_panel import ScanPanel
 from .result_panel import ResultPanel
 from scanner import Scanner
@@ -17,7 +17,7 @@ class MainWindow(tk.Tk):
 
     def __init__(self):
         super().__init__()
-        self.title('Duplicate Finder')
+        self.title(t('window_title'))
         self.geometry('1100x740')
         self.minsize(900, 600)
 
@@ -38,18 +38,34 @@ class MainWindow(tk.Tk):
                 pass
 
     def _build(self):
-        # 상단: 스캔 패널
+        # 언어 전환 버튼 (우상단)
+        top_bar = tk.Frame(self)
+        top_bar.pack(fill='x', padx=10, pady=(6, 0))
+        self._lang_btn = tk.Button(top_bar, text=t('btn_lang_toggle'),
+                                   command=self._toggle_language, width=8)
+        self._lang_btn.pack(side='right')
+
+        # 스캔 패널
         self._scan_panel = ScanPanel(
             self,
             on_scan=self._on_scan,
             on_cancel=self._on_cancel,
             on_pause=self._on_pause,
         )
-        self._scan_panel.pack(fill='x', padx=10, pady=(10, 4))
+        self._scan_panel.pack(fill='x', padx=10, pady=(4, 4))
 
-        # 하단: 결과 패널
+        # 결과 패널
         self._result_panel = ResultPanel(self)
         self._result_panel.pack(fill='both', expand=True, padx=10, pady=(4, 10))
+
+    def _toggle_language(self):
+        new_lang = 'en' if get_language() == 'ko' else 'ko'
+        set_language(new_lang)
+        # 재시작 없이 즉시 반영하려면 위젯을 다시 그려야 하므로 윈도우 재빌드
+        self._lang_btn.destroy()
+        self._scan_panel.destroy()
+        self._result_panel.destroy()
+        self._build()
 
     def _on_scan(self, folder: Path, recursive: bool, threshold: int, similar: bool,
                  include_images: bool = True, include_videos: bool = False,
@@ -62,7 +78,7 @@ class MainWindow(tk.Tk):
     def _finish_scan(self, exact_groups, similar_groups, total):
         self._result_panel.show_results(exact_groups, similar_groups, total)
         self._scan_panel.set_processing(False)
-        self._scan_panel.set_status('스캔 완료!')
+        self._scan_panel.set_status(t('status_scan_complete'))
 
     def _on_pause(self, is_paused: bool):
         if is_paused:
@@ -71,10 +87,10 @@ class MainWindow(tk.Tk):
             self._scanner.resume()
 
     def _on_cancel(self):
-        self._scanner.resume()  # 일시중지 상태에서도 취소 가능하도록
+        self._scanner.resume()
         self._scanner.stop()
         self._scan_panel.set_scanning(False)
-        self._scan_panel.set_status('스캔이 취소되었습니다.')
+        self._scan_panel.set_status(t('status_scan_cancelled'))
 
     def _poll_queue(self):
         """큐에서 진행 상황 메시지를 읽어 GUI 업데이트."""
@@ -84,7 +100,7 @@ class MainWindow(tk.Tk):
                 mtype = msg['type']
 
                 if mtype == 'total':
-                    pass  # 총 파일 수 (진행률 계산에 활용)
+                    pass
 
                 elif mtype == 'progress':
                     self._scan_panel.update_progress(
@@ -105,17 +121,16 @@ class MainWindow(tk.Tk):
 
                 elif mtype == 'cancelled':
                     self._scan_panel.set_scanning(False)
-                    self._scan_panel.set_status('취소됨')
+                    self._scan_panel.set_status(t('status_cancelled'))
                     self.after(1500, self._scan_panel.reset_progress)
                     return
 
                 elif mtype == 'error':
                     self._scan_panel.set_scanning(False)
-                    messagebox.showerror('스캔 오류', msg['message'])
+                    messagebox.showerror(t('dlg_title_scan_error'), msg['message'])
                     return
 
         except Exception:
             pass
 
-        # 아직 완료 전이면 계속 폴링
         self.after(100, self._poll_queue)
