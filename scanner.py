@@ -179,7 +179,9 @@ class Scanner:
             def union(x, y):
                 parent[find(x)] = find(y)
 
+            _CHUNK = 500  # inner 루프에서 pause/cancel 체크 간격
             self._put('status', message=f'유사도 비교 중... (0 / {n}개)')
+            ops = 0
             for i in range(n):
                 self._pause_event.wait()  # 일시중지 중이면 여기서 대기
                 if self._stop_event.is_set():
@@ -191,6 +193,12 @@ class Scanner:
                     dist = phash_list[i][1] - phash_list[j][1]
                     if dist <= threshold:
                         union(i, j)
+                    ops += 1
+                    if ops % _CHUNK == 0:
+                        self._pause_event.wait()
+                        if self._stop_event.is_set():
+                            self._put('cancelled')
+                            return
 
             groups_map: dict[int, list[Path]] = {}
             for i, (fp, _) in enumerate(phash_list):

@@ -16,6 +16,21 @@ from .preview_card import PreviewCard, format_size
 
 _MAX_LIST = 10  # 팝업에 표시할 최대 파일 수
 
+
+def _score_file(fp: Path) -> tuple:
+    """원본 판별 점수: (해상도, 파일크기, -수정시간) — 클수록 원본."""
+    try:
+        stat = fp.stat()
+        size, mtime = stat.st_size, stat.st_mtime
+    except Exception:
+        size, mtime = 0, 0
+    try:
+        with Image.open(fp) as img:
+            res = img.width * img.height
+    except Exception:
+        res = 0
+    return (res, size, -mtime)
+
 def _format_file_list(paths: list) -> str:
     lines = [f'  • {p.name}' for p in paths[:_MAX_LIST]]
     if len(paths) > _MAX_LIST:
@@ -278,25 +293,12 @@ class ResultPanel(tk.Frame):
         dlg.geometry(f'+{px}+{py}')
 
         def _worker():
-            def score(fp):
-                try:
-                    stat = fp.stat()
-                    size, mtime = stat.st_size, stat.st_mtime
-                except Exception:
-                    size, mtime = 0, 0
-                try:
-                    with Image.open(fp) as img:
-                        res = img.width * img.height
-                except Exception:
-                    res = 0
-                return (res, size, -mtime)
-
             targets = []
             for group_idx in group_indices:
                 if group_idx >= len(groups):
                     continue
                 group = groups[group_idx]
-                best = max(range(len(group)), key=lambda i: score(group[i]))
+                best = max(range(len(group)), key=lambda i: _score_file(group[i]))
                 targets.extend(fp for i, fp in enumerate(group) if i != best)
 
             if not targets:
@@ -461,27 +463,13 @@ class ResultPanel(tk.Frame):
         if not self._current_cards:
             return
 
-        def score(fp: Path):
-            try:
-                stat = fp.stat()
-                size = stat.st_size
-                mtime = stat.st_mtime
-            except Exception:
-                size, mtime = 0, 0
-            try:
-                with Image.open(fp) as img:
-                    res = img.width * img.height
-            except Exception:
-                res = 0
-            return (res, size, -mtime)
-
         from collections import defaultdict
         groups: dict[int, list[PreviewCard]] = defaultdict(list)
         for card in self._current_cards:
             groups[self._card_to_group.get(card, 0)].append(card)
 
         for cards in groups.values():
-            best = max(range(len(cards)), key=lambda i: score(cards[i].filepath))
+            best = max(range(len(cards)), key=lambda i: _score_file(cards[i].filepath))
             for i, card in enumerate(cards):
                 card.set_selected(i != best)
                 card.highlight(i != best)
