@@ -243,7 +243,7 @@ class ScanPanel(tk.LabelFrame):
 
         self._scan_btn = tk.Button(self._row_btns, text=t('btn_scan_start'),
                                    command=self._start_scan, width=12,
-                                   bg='#4CAF50', fg='white',
+                                   bg='#4CAF50', fg='white', disabledforeground='white',
                                    font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE, 'bold'))
         self._scan_btn.pack(side='left', padx=(0, 6))
 
@@ -254,7 +254,7 @@ class ScanPanel(tk.LabelFrame):
 
         self._cancel_btn = tk.Button(self._row_btns, text=t('btn_cancel_scan'),
                                      command=self._cancel_scan, width=8, state='disabled',
-                                     bg='#6B7280', fg='white')
+                                     bg='#6B7280', fg='white', disabledforeground='white')
         self._cancel_btn.pack(side='left')
 
         # ── Row 4-6: 진행 상황 ───────────────────────────────────────
