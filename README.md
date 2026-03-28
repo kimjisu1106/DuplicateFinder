@@ -11,10 +11,12 @@
 
 - **완전 중복 탐지** — MD5 해시로 내용이 100% 동일한 파일 그룹화 (파일명 무관)
 - **유사 이미지 탐지** — pHash 알고리즘으로 크기나 편집이 다소 다른 사진도 감지
-- **이미지 / 영상 / 오디오** 지원
+- **이미지 / 영상 / 오디오 / 전체 파일** 지원 — 확장자 무관 전체 파일 MD5 스캔 가능
 - **안전한 삭제** — 휴지통으로 이동 (복구 가능), 확인 다이얼로그 필수
 - **대용량 폴더 대응** — 백그라운드 스캔, 일시중지/재개, GUI 프리징 없음
 - **원본 자동 추천** — 해상도 → 파일 크기 → 날짜 기준으로 원본 선정
+- **다중 그룹 선택** — Ctrl+클릭 / Shift+클릭으로 여러 그룹 일괄 처리
+- **한/영 언어 전환** — 앱 우측 상단 버튼으로 즉시 전환
 
 ---
 
@@ -47,10 +49,10 @@ python main.py
 ## 🔍 사용 방법
 
 1. **폴더 선택** — 스캔할 폴더를 선택하세요
-2. **옵션 설정** — 검색 대상(이미지/영상/오디오), 유사 이미지 검색 여부, 민감도 조절
-3. **스캔 시작** — 진행률과 남은 시간이 실시간으로 표시됩니다
+2. **옵션 설정** — 검색 대상(이미지/영상/오디오/전체 파일), 하위 폴더 포함 여부, 유사 이미지 검색 여부 및 민감도 조절
+3. **스캔 시작** — 진행률과 남은 시간이 실시간으로 표시됩니다. 일시중지/재개/취소 가능
 4. **결과 확인** — 완전 중복 / 유사 중복 탭에서 그룹별로 파일 비교
-5. **삭제** — 원본 유지 버튼으로 자동 선택 후 일괄 삭제, 또는 직접 체크
+5. **삭제** — 원본 유지 버튼으로 자동 선택 후 일괄 삭제, 또는 직접 체크. Ctrl/Shift+클릭으로 여러 그룹 한 번에 처리 가능
 
 ---
 
@@ -107,10 +109,12 @@ Quickly find and remove exact duplicates and visually similar images from your d
 
 - **Exact duplicate detection** — MD5 hash comparison (filename-independent)
 - **Similar image detection** — pHash algorithm for slightly edited or resized photos
-- **Image / Video / Audio** support
+- **Image / Video / Audio / All files** support — scan all file types by MD5 regardless of extension
 - **Safe deletion** — moves to Trash only, confirmation dialog required
 - **Large folder support** — background scan with pause/resume, no GUI freezing
 - **Auto original detection** — ranked by resolution → file size → date
+- **Multi-group selection** — Ctrl+click / Shift+click for bulk processing
+- **Korean / English UI** — toggle language instantly from the top bar
 
 ### Installation
 
@@ -125,6 +129,14 @@ python main.py
 ```
 
 Requires Python 3.10+
+
+### Usage
+
+1. **Select folder** — choose the folder to scan
+2. **Set options** — target file types, include subfolders, similar image search and sensitivity
+3. **Start scan** — real-time progress and ETA displayed. Pause/resume/cancel available
+4. **Review results** — compare files in Exact Duplicates / Similar tabs
+5. **Delete** — use "Keep original" for auto-selection, or check manually. Ctrl/Shift+click to bulk process multiple groups
 
 ### Security
 
