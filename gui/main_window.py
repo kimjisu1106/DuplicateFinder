@@ -1,6 +1,7 @@
 """
 main_window.py — 메인 윈도우 레이아웃
 """
+import sys
 import tkinter as tk
 from tkinter import messagebox, font as tkfont
 from pathlib import Path
@@ -21,7 +22,8 @@ class MainWindow(tk.Tk):
         self.geometry('1100x740')
         self.minsize(900, 600)
         try:
-            self.iconbitmap(Path(__file__).parent.parent / 'icon.ico')
+            base = Path(sys._MEIPASS) if getattr(sys, 'frozen', False) else Path(__file__).parent.parent
+            self.iconbitmap(base / 'icon.ico')
         except Exception:
             pass
 
