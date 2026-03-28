@@ -9,7 +9,7 @@
 **GUI 프레임워크:** Tkinter (Python 내장, 설치 불필요)
 **실행:** `python main.py`
 **최초 구현 완료:** 2026-03-22
-**마지막 업데이트:** 2026-03-28 (UX 개선: 버튼 재배치, 민감도 슬라이더 조건부 표시, 유사 이미지 검색 조건부 표시)
+**마지막 업데이트:** 2026-03-28 (다국어, UX 개선, 코드 리팩토링, .exe 배포)
 
 ---
 
@@ -17,8 +17,10 @@
 
 - Python Tkinter 기반 로컬 파일 중복 탐지 데스크탑 앱
 - MD5 해시(완전 동일)와 pHash(유사 이미지) 2단계 스캔 방식
-- 이미지 / 영상 / 오디오 파일 지원
+- 이미지 / 영상 / 오디오 / 전체 파일(확장자 무관) 지원
+- 한/영 다국어 지원 (언어별 폰트 자동 적용)
 - 삭제는 휴지통 이동 방식으로 안전하게 처리
+- PyInstaller로 .exe 패키징 완료 (dist/DuplicateFinder.exe)
 
 ---
 
@@ -63,10 +65,22 @@
     - 다중 선택 시 "원본 유지 후 나머지 삭제" 일괄 처리 (백그라운드)
 6. 파일 형식 지원 ✅
     - 이미지 / 영상 / 오디오 체크박스로 검색 대상 선택
+    - 전체 파일(확장자 무관) MD5 스캔 모드 추가
     - 영상/오디오 포함 시 유사 이미지 검색 자동 비활성화
-7. 안정성 ✅
+7. 다국어 지원 ✅
+    - 한/영 언어 전환 버튼 (앱 재시작 없이 즉시 전환)
+    - 언어별 폰트 자동 적용 (ko: 맑은 고딕, en: Segoe UI)
+    - 언어 버튼에 반대 언어 폰트 적용
+8. 코드 품질 개선 ✅
+    - _score_file() 모듈 함수로 중복 제거
+    - pHash inner 루프 500회마다 pause/cancel 체크 추가
+    - _cb_all_files 미정의 버그 수정
+9. 안정성 ✅
     - 경로 탈출 방지, 네트워크 요청 없음, 위험 코드 패턴 없음
     - 보안 검토 절차 자동화 (코드 수정 시 매번 실행)
+10. 배포 ✅
+    - PyInstaller로 단일 .exe 패키징 (dist/DuplicateFinder.exe, ~53MB)
+    - .gitignore 추가 (build/, dist/ 제외)
 
 ---
 
@@ -78,9 +92,8 @@
 
 ## 다음에 할 일
 
-1. **README 스크린샷 추가** — 실제 앱 화면 캡처 후 삽입 (한국어/영어 각각)
-2. **GitHub repo public 전환** — README 완성 후
-3. **.exe 배포** — PyInstaller로 패키징 후 블로그 페이지에 업로드
+1. **GitHub Releases에 .exe 업로드** — v1.0.0 태그 생성 후 dist/DuplicateFinder.exe 첨부
+2. **블로그 포스팅** — 앱 소개 및 다운로드 링크 게시
 
 ---
 
@@ -159,18 +172,20 @@
 ## 파일 구조
 
 ```
-photo-duplicate-finder/
-├── main.py              # 앱 진입점
-├── scanner.py           # 폴더 스캔, 해시 계산, 중복 탐지 로직
+DuplicateFinder/
+├── main.py                  # 앱 진입점
+├── scanner.py               # 폴더 스캔, 해시 계산, 중복 탐지 로직
 ├── gui/
 │   ├── __init__.py
-│   ├── theme.py         # 전역 폰트/색상 설정 (APP_FONT_FAMILY, APP_FONT_SIZE)
-│   ├── i18n.py          # 한/영 텍스트 딕셔너리 + t() 함수 + set_language()
-│   ├── main_window.py   # 메인 윈도우 레이아웃 + 언어 전환 버튼
-│   ├── scan_panel.py    # 폴더 선택 + 스캔 설정 패널
-│   ├── result_panel.py  # 결과 목록 + 미리보기 패널
-│   └── preview_card.py  # 개별 파일 카드 (썸네일/아이콘 + 정보 + 재생/체크박스)
+│   ├── theme.py             # 언어별 폰트/색상 설정 + apply_language_font()
+│   ├── i18n.py              # 한/영 텍스트 딕셔너리 + t() / set_language() / get_language()
+│   ├── main_window.py       # 메인 윈도우 레이아웃 + 언어 전환
+│   ├── scan_panel.py        # 폴더 선택 + 스캔 설정 패널
+│   ├── result_panel.py      # 결과 목록 + 미리보기 패널 + _score_file()
+│   └── preview_card.py      # 개별 파일 카드 (썸네일/아이콘 + 정보 + 재생/체크박스)
+├── DuplicateFinder.spec     # PyInstaller 빌드 설정
 ├── requirements.txt
+├── .gitignore
 └── README.md
 ```
 
