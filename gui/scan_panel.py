@@ -210,18 +210,17 @@ class ScanPanel(tk.LabelFrame):
                                           command=self._on_similar_toggle)
         self._similar_cb.pack(side='left', padx=(12, 0))  # 초기: 이미지 체크됨
 
-        # ── Row 2: 민감도 슬라이더 (유사 이미지 검색 체크 시에만 표시) ──
-        self._threshold_row = tk.Frame(self)
-        self._threshold_row.pack(fill='x', pady=(0, 4))
+        # 민감도 슬라이더 (유사 이미지 검색 우측, 체크 시에만 표시)
+        self._threshold_frame = tk.Frame(self._row1)
 
-        tk.Label(self._threshold_row, text=t('label_sensitivity')).pack(side='left', padx=(0, 4))
+        tk.Label(self._threshold_frame, text=t('label_sensitivity')).pack(side='left', padx=(0, 4))
 
-        slider_wrap = tk.Frame(self._threshold_row)
+        slider_wrap = tk.Frame(self._threshold_frame)
         slider_wrap.pack(side='left')
 
         self._threshold_var = tk.IntVar(value=10)
         self._slider = tk.Scale(slider_wrap, from_=0, to=20, orient='horizontal',
-                                variable=self._threshold_var, length=140, showvalue=False)
+                                variable=self._threshold_var, length=120, showvalue=False)
         self._slider.pack()
 
         hint = tk.Frame(slider_wrap)
@@ -235,7 +234,10 @@ class ScanPanel(tk.LabelFrame):
         self._slider.bind('<Leave>', self._hide_slider_tip)
         self._slider.bind('<Motion>', self._update_slider_tip)
 
-        # ── Row 3: 스캔 버튼 ─────────────────────────────────────────
+        # 초기 표시: 유사 이미지 검색 기본 체크 상태이므로 슬라이더 표시
+        self._threshold_frame.pack(side='left', padx=(8, 0))
+
+        # ── Row 2: 스캔 버튼 ─────────────────────────────────────────
         self._row_btns = tk.Frame(self)
         self._row_btns.pack(fill='x', pady=(4, 0))
 
@@ -314,12 +316,12 @@ class ScanPanel(tk.LabelFrame):
         self._update_threshold_visibility()
 
     def _update_threshold_visibility(self):
-        """민감도 슬라이더 행 표시 여부 결정."""
+        """민감도 슬라이더 표시 여부 결정 (similar_cb 우측 인라인)."""
         show = self._similar_var.get() and self._images_var.get() and not self._all_files_var.get()
         if show:
-            self._threshold_row.pack(fill='x', pady=(0, 4), after=self._row1)
+            self._threshold_frame.pack(side='left', padx=(8, 0), after=self._similar_cb)
         else:
-            self._threshold_row.pack_forget()
+            self._threshold_frame.pack_forget()
             self._hide_slider_tip(None)
 
     # ── 이벤트 핸들러 ────────────────────────────────────────────────

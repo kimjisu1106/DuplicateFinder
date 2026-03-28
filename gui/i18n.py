@@ -26,7 +26,7 @@ _STRINGS: dict[str, dict[str, str]] = {
     'label_sensitivity':            {'ko': '민감도:',                 'en': 'Sensitivity:'},
     'label_strict':                 {'ko': '엄격',                   'en': 'strict'},
     'label_loose':                  {'ko': '관대',                   'en': 'loose'},
-    'label_sponsor':                {'ko': '☕후원하기 Buy me a coffee', 'en': '☕ Buy me a coffee'},
+    'label_sponsor':                {'ko': '☕ 후원하기',            'en': '☕ Buy me a coffee'},
     'btn_scan_start':               {'ko': '스캔 시작',               'en': 'Start Scan'},
     'btn_pause':                    {'ko': '일시중지',                'en': 'Pause'},
     'btn_resume':                   {'ko': '재개',                   'en': 'Resume'},
