@@ -2,6 +2,7 @@
 result_panel.py — 결과 목록 + 미리보기 패널
 """
 import queue
+import sys
 import threading
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -180,6 +181,11 @@ class ResultPanel(tk.Frame):
         dlg.resizable(False, False)
         dlg.grab_set()
         dlg.protocol('WM_DELETE_WINDOW', lambda: None)
+        try:
+            base = Path(sys._MEIPASS) if getattr(sys, 'frozen', False) else Path(__file__).parent.parent
+            dlg.iconbitmap(base / 'icon.ico')
+        except Exception:
+            pass
 
         tk.Label(dlg, text=t('dlg_msg_moving_files', total=total),
                  font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE)).pack(padx=24, pady=(16, 8))
@@ -269,6 +275,11 @@ class ResultPanel(tk.Frame):
         dlg.resizable(False, False)
         dlg.grab_set()
         dlg.protocol('WM_DELETE_WINDOW', lambda: None)
+        try:
+            base = Path(sys._MEIPASS) if getattr(sys, 'frozen', False) else Path(__file__).parent.parent
+            dlg.iconbitmap(base / 'icon.ico')
+        except Exception:
+            pass
 
         tk.Label(dlg, text=t('dlg_msg_processing_groups', n=len(group_indices)),
                  font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE)).pack(padx=24, pady=(16, 8))
