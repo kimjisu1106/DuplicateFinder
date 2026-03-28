@@ -213,10 +213,10 @@ class ScanPanel(tk.LabelFrame):
         # 민감도 슬라이더 (유사 이미지 검색 우측, 체크 시에만 표시)
         self._threshold_frame = tk.Frame(self._row1)
 
-        tk.Label(self._threshold_frame, text=t('label_sensitivity')).pack(side='left', padx=(0, 4))
+        tk.Label(self._threshold_frame, text=t('label_sensitivity')).pack(side='left', padx=(0, 4), anchor='n')
 
         slider_wrap = tk.Frame(self._threshold_frame)
-        slider_wrap.pack(side='left')
+        slider_wrap.pack(side='left', anchor='n')
 
         self._threshold_var = tk.IntVar(value=10)
         self._slider = tk.Scale(slider_wrap, from_=0, to=20, orient='horizontal',
@@ -235,7 +235,7 @@ class ScanPanel(tk.LabelFrame):
         self._slider.bind('<Motion>', self._update_slider_tip)
 
         # 초기 표시: 유사 이미지 검색 기본 체크 상태이므로 슬라이더 표시
-        self._threshold_frame.pack(side='left', padx=(8, 0))
+        self._threshold_frame.pack(side='left', padx=(8, 0), anchor='n')
 
         # ── Row 2: 스캔 버튼 ─────────────────────────────────────────
         self._row_btns = tk.Frame(self)
@@ -319,7 +319,7 @@ class ScanPanel(tk.LabelFrame):
         """민감도 슬라이더 표시 여부 결정 (similar_cb 우측 인라인)."""
         show = self._similar_var.get() and self._images_var.get() and not self._all_files_var.get()
         if show:
-            self._threshold_frame.pack(side='left', padx=(8, 0), after=self._similar_cb)
+            self._threshold_frame.pack(side='left', padx=(8, 0), anchor='n', after=self._similar_cb)
         else:
             self._threshold_frame.pack_forget()
             self._hide_slider_tip(None)
