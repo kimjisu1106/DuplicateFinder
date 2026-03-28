@@ -163,8 +163,9 @@ class ScanPanel(tk.LabelFrame):
         bmc.pack(side='right', padx=(4, 0))
         bmc.bind('<Button-1>', lambda e: webbrowser.open('https://kimlog0415.github.io/contact/'))
 
-        tk.Button(row0, text=t('btn_choose_folder'),
-                  command=self._choose_folder, width=10).pack(side='right', padx=(4, 0))
+        self._folder_btn = tk.Button(row0, text=t('btn_choose_folder'),
+                                     command=self._choose_folder, width=10)
+        self._folder_btn.pack(side='right', padx=(4, 0))
 
         tk.Label(row0, text=t('label_folder')).pack(side='left')
         self._folder_var = tk.StringVar(value=t('status_no_folder_selected'))
@@ -176,8 +177,9 @@ class ScanPanel(tk.LabelFrame):
         self._row1.pack(fill='x', pady=(0, 2))
 
         self._recursive_var = tk.BooleanVar(value=True)
-        tk.Checkbutton(self._row1, text=t('cb_include_subfolders'),
-                       variable=self._recursive_var).pack(side='left', anchor='n')
+        self._recursive_cb = tk.Checkbutton(self._row1, text=t('cb_include_subfolders'),
+                                            variable=self._recursive_var)
+        self._recursive_cb.pack(side='left', anchor='n')
 
         tk.Label(self._row1, text=t('label_search_target')).pack(side='left', anchor='n')
 
@@ -408,11 +410,19 @@ class ScanPanel(tk.LabelFrame):
             self._pause_btn.config(state='normal', text=t('btn_pause'))
             self._cancel_btn.config(state='normal')
             self._paused = False
+            for w in (self._folder_btn, self._recursive_cb, self._cb_images,
+                      self._cb_videos, self._cb_audio, self._cb_all_files,
+                      self._similar_cb, self._slider, self._lang_btn):
+                w.config(state='disabled')
         else:
             self._scan_btn.config(state='normal')
             self._pause_btn.config(state='disabled', text=t('btn_pause'))
             self._cancel_btn.config(state='disabled')
             self._paused = False
+            for w in (self._folder_btn, self._recursive_cb, self._cb_all_files,
+                      self._similar_cb, self._slider, self._lang_btn):
+                w.config(state='normal')
+            self._on_all_files_toggle()  # images/videos/audio 상태 복원
 
     def update_progress(self, current: int, total: int, filename: str = ''):
         pct = (current / total * 100) if total > 0 else 0
