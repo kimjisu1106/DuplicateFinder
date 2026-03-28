@@ -20,6 +20,10 @@ class MainWindow(tk.Tk):
         self.title(t('window_title'))
         self.geometry('1100x740')
         self.minsize(900, 600)
+        try:
+            self.iconbitmap(Path(__file__).parent.parent / 'icon.ico')
+        except Exception:
+            pass
 
         self._apply_global_font()
         self._scanner = Scanner()
