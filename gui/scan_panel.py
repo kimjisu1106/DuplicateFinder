@@ -199,9 +199,10 @@ class ScanPanel(tk.LabelFrame):
                                         command=self._on_filetype_toggle)
         self._cb_audio.pack(side='left', padx=(2, 0), anchor='n')
 
-        tk.Checkbutton(self._row1, text=t('cb_all_files'),
-                       variable=self._all_files_var,
-                       command=self._on_all_files_toggle).pack(side='left', padx=(8, 0), anchor='n')
+        self._cb_all_files = tk.Checkbutton(self._row1, text=t('cb_all_files'),
+                                            variable=self._all_files_var,
+                                            command=self._on_all_files_toggle)
+        self._cb_all_files.pack(side='left', padx=(8, 0), anchor='n')
 
         # 유사 이미지 검색 (이미지 체크 시에만 표시)
         self._similar_var = tk.BooleanVar(value=True)
