@@ -21,6 +21,7 @@ _STRINGS: dict[str, dict[str, str]] = {
     'cb_images':                    {'ko': '이미지',                  'en': 'Images'},
     'cb_videos':                    {'ko': '영상',                   'en': 'Videos'},
     'cb_audio':                     {'ko': '오디오',                  'en': 'Audio'},
+    'cb_all_files':                 {'ko': '전체 파일 (확장자 무관)',   'en': 'All files (any extension)'},
     'cb_similar_images':            {'ko': '유사 이미지 검색',         'en': 'Similar image search'},
     'label_sensitivity':            {'ko': '   민감도:',              'en': '   Sensitivity:'},
     'label_sensitivity_hint':       {'ko': '← 엄격  관대 →',         'en': '← strict  loose →'},

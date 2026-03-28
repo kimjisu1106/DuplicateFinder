@@ -166,12 +166,18 @@ class ScanPanel(tk.LabelFrame):
         self._images_var = tk.BooleanVar(value=True)
         self._videos_var = tk.BooleanVar(value=False)
         self._audio_var = tk.BooleanVar(value=False)
-        tk.Checkbutton(row1, text=t('cb_images'), variable=self._images_var,
-                       command=self._on_filetype_toggle).pack(side='left', padx=(4, 0))
-        tk.Checkbutton(row1, text=t('cb_videos'), variable=self._videos_var,
-                       command=self._on_filetype_toggle).pack(side='left', padx=(2, 0))
-        tk.Checkbutton(row1, text=t('cb_audio'), variable=self._audio_var,
-                       command=self._on_filetype_toggle).pack(side='left', padx=(2, 0))
+        self._all_files_var = tk.BooleanVar(value=False)
+        self._cb_images = tk.Checkbutton(row1, text=t('cb_images'), variable=self._images_var,
+                       command=self._on_filetype_toggle)
+        self._cb_images.pack(side='left', padx=(4, 0))
+        self._cb_videos = tk.Checkbutton(row1, text=t('cb_videos'), variable=self._videos_var,
+                       command=self._on_filetype_toggle)
+        self._cb_videos.pack(side='left', padx=(2, 0))
+        self._cb_audio = tk.Checkbutton(row1, text=t('cb_audio'), variable=self._audio_var,
+                       command=self._on_filetype_toggle)
+        self._cb_audio.pack(side='left', padx=(2, 0))
+        tk.Checkbutton(row1, text=t('cb_all_files'), variable=self._all_files_var,
+                       command=self._on_all_files_toggle).pack(side='left', padx=(8, 0))
 
         self._similar_var = tk.BooleanVar(value=True)
         self._similar_cb = tk.Checkbutton(row1, text=t('cb_similar_images'),
@@ -252,6 +258,23 @@ class ScanPanel(tk.LabelFrame):
                 display = '...' + display[-55:]
             self._folder_var.set(display)
 
+    def _on_all_files_toggle(self):
+        if self._all_files_var.get():
+            self._cb_images.config(state='disabled')
+            self._cb_videos.config(state='disabled')
+            self._cb_audio.config(state='disabled')
+            self._similar_var.set(False)
+            self._similar_cb.config(state='disabled')
+            self._slider.config(state='disabled')
+            for w in self._threshold_frame.winfo_children():
+                if isinstance(w, tk.Label):
+                    w.config(foreground='#aaaaaa')
+        else:
+            self._cb_images.config(state='normal')
+            self._cb_videos.config(state='normal')
+            self._cb_audio.config(state='normal')
+            self._on_filetype_toggle()
+
     def _on_filetype_toggle(self):
         if self._videos_var.get() or self._audio_var.get():
             self._similar_var.set(False)
@@ -299,6 +322,7 @@ class ScanPanel(tk.LabelFrame):
             include_images=self._images_var.get(),
             include_videos=self._videos_var.get(),
             include_audio=self._audio_var.get(),
+            include_all=self._all_files_var.get(),
         )
 
     def _toggle_pause(self):

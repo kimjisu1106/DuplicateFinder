@@ -43,8 +43,16 @@ def get_phash(filepath: Path):
 
 def collect_files(folder: Path, recursive: bool,
                   include_images: bool, include_videos: bool,
-                  include_audio: bool = False) -> list[Path]:
+                  include_audio: bool = False,
+                  include_all: bool = False) -> list[Path]:
     """폴더에서 선택된 종류의 파일 목록을 수집."""
+    pattern = '**/*' if recursive else '*'
+    files = []
+    if include_all:
+        for p in folder.glob(pattern):
+            if p.is_file() and is_safe_path(folder, p):
+                files.append(p)
+        return files
     exts = set()
     if include_images:
         exts |= IMAGE_EXTENSIONS
@@ -52,8 +60,6 @@ def collect_files(folder: Path, recursive: bool,
         exts |= VIDEO_EXTENSIONS
     if include_audio:
         exts |= AUDIO_EXTENSIONS
-    pattern = '**/*' if recursive else '*'
-    files = []
     for p in folder.glob(pattern):
         if p.is_file() and p.suffix.lower() in exts:
             if is_safe_path(folder, p):
@@ -81,13 +87,15 @@ class Scanner:
 
     def start(self, folder: Path, recursive: bool, threshold: int,
               similar: bool = True, include_images: bool = True,
-              include_videos: bool = False, include_audio: bool = False):
+              include_videos: bool = False, include_audio: bool = False,
+              include_all: bool = False):
         """스캔을 백그라운드 스레드에서 시작."""
         self._stop_event.clear()
         self._pause_event.set()
         self._thread = threading.Thread(
             target=self._run,
-            args=(folder, recursive, threshold, similar, include_images, include_videos, include_audio),
+            args=(folder, recursive, threshold, similar,
+                  include_images, include_videos, include_audio, include_all),
             daemon=True,
         )
         self._thread.start()
@@ -101,11 +109,15 @@ class Scanner:
 
     def _run(self, folder: Path, recursive: bool, threshold: int,
              similar: bool = True, include_images: bool = True,
-             include_videos: bool = False, include_audio: bool = False):
+             include_videos: bool = False, include_audio: bool = False,
+             include_all: bool = False):
         try:
             # 파일 수집
             self._put('status', message='파일 목록 수집 중...')
-            files = collect_files(folder, recursive, include_images, include_videos, include_audio)
+            files = collect_files(folder, recursive, include_images, include_videos,
+                                  include_audio, include_all)
+            if include_all:
+                similar = False  # 전체 파일 모드에서는 유사 검색 불가
             total = len(files)
             if total == 0:
                 self._put('done', exact_groups=[], similar_groups=[], total=0)

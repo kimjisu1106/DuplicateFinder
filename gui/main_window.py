@@ -69,10 +69,11 @@ class MainWindow(tk.Tk):
 
     def _on_scan(self, folder: Path, recursive: bool, threshold: int, similar: bool,
                  include_images: bool = True, include_videos: bool = False,
-                 include_audio: bool = False):
+                 include_audio: bool = False, include_all: bool = False):
         self._result_panel.clear()
         self._scan_panel.set_scanning(True)
-        self._scanner.start(folder, recursive, threshold, similar, include_images, include_videos, include_audio)
+        self._scanner.start(folder, recursive, threshold, similar,
+                            include_images, include_videos, include_audio, include_all)
         self._poll_queue()
 
     def _finish_scan(self, exact_groups, similar_groups, total):
