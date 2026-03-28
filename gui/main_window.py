@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import messagebox, font as tkfont
 from pathlib import Path
 
-from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
+from . import theme
 from .i18n import t, set_language, get_language
 from .scan_panel import ScanPanel
 from .result_panel import ResultPanel
@@ -27,13 +27,14 @@ class MainWindow(tk.Tk):
 
     def _apply_global_font(self):
         """모든 Tkinter 위젯의 기본 폰트를 통일."""
+        theme.apply_language_font(get_language(), tkfont.families())
         default_font = tkfont.nametofont('TkDefaultFont')
-        default_font.configure(family=APP_FONT_FAMILY, size=APP_FONT_SIZE)
+        default_font.configure(family=theme.APP_FONT_FAMILY, size=theme.APP_FONT_SIZE)
 
         for name in ('TkTextFont', 'TkFixedFont', 'TkMenuFont',
                      'TkHeadingFont', 'TkCaptionFont', 'TkSmallCaptionFont'):
             try:
-                tkfont.nametofont(name).configure(family=APP_FONT_FAMILY, size=APP_FONT_SIZE)
+                tkfont.nametofont(name).configure(family=theme.APP_FONT_FAMILY, size=theme.APP_FONT_SIZE)
             except Exception:
                 pass
 
@@ -53,6 +54,7 @@ class MainWindow(tk.Tk):
     def _toggle_language(self):
         new_lang = 'en' if get_language() == 'ko' else 'ko'
         set_language(new_lang)
+        self._apply_global_font()
         self._scan_panel.destroy()
         self._result_panel.destroy()
         self._build()

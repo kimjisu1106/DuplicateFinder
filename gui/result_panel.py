@@ -10,7 +10,7 @@ from pathlib import Path
 from send2trash import send2trash
 from PIL import Image
 
-from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
+from . import theme
 from .i18n import t
 from .preview_card import PreviewCard, format_size
 
@@ -44,7 +44,7 @@ class ResultPanel(tk.Frame):
 
         self._summary_var = tk.StringVar(value=t('status_no_results'))
         tk.Label(summary_frame, textvariable=self._summary_var,
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE), foreground='#333333').pack(side='left')
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE), foreground='#333333').pack(side='left')
         tk.Checkbutton(summary_frame, text=t('cb_show_thumbnail'),
                        variable=self._show_thumb_var,
                        command=self._on_thumb_toggle).pack(side='right')
@@ -69,7 +69,7 @@ class ResultPanel(tk.Frame):
         left.pack_propagate(False)
 
         tk.Label(left, text=t('label_group_list'),
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold')).pack(anchor='w')
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE, 'bold')).pack(anchor='w')
 
         listbox_frame = tk.Frame(left)
         listbox_frame.pack(fill='both', expand=True)
@@ -77,7 +77,7 @@ class ResultPanel(tk.Frame):
         scrollbar = tk.Scrollbar(listbox_frame, orient='vertical')
         listbox = tk.Listbox(listbox_frame, yscrollcommand=scrollbar.set,
                              selectmode='extended', activestyle='none',
-                             font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1), width=28)
+                             font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 1), width=28)
         scrollbar.config(command=listbox.yview)
         scrollbar.pack(side='right', fill='y')
         listbox.pack(side='left', fill='both', expand=True)
@@ -131,7 +131,7 @@ class ResultPanel(tk.Frame):
 
         tk.Button(btn_row, text=t('btn_delete_selected'),
                   bg='#f44336', fg='white',
-                  font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'),
+                  font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE, 'bold'),
                   command=lambda: self._delete_selected(tab_key)).pack(side='left', padx=(0, 6))
 
         tk.Button(btn_row, text=t('btn_dismiss_group'),
@@ -167,11 +167,11 @@ class ResultPanel(tk.Frame):
         dlg.protocol('WM_DELETE_WINDOW', lambda: None)
 
         tk.Label(dlg, text=t('dlg_msg_moving_files', total=total),
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE)).pack(padx=24, pady=(16, 8))
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE)).pack(padx=24, pady=(16, 8))
 
         count_var = tk.StringVar(value=f'0 / {total}')
         tk.Label(dlg, textvariable=count_var,
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1),
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 1),
                  foreground='#555555').pack()
 
         prog_var = tk.DoubleVar(value=0)
@@ -179,7 +179,7 @@ class ResultPanel(tk.Frame):
 
         file_var = tk.StringVar(value='')
         tk.Label(dlg, textvariable=file_var,
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2),
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 2),
                  foreground='#888888', width=44).pack(padx=24, pady=(0, 16))
 
         dlg.update_idletasks()
@@ -226,12 +226,12 @@ class ResultPanel(tk.Frame):
         n_groups = len(group_indices)
         tk.Label(inner,
                  text=t('status_too_many_cards', n_groups=n_groups, total_files=total_files),
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE),
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE),
                  foreground='#555555', justify='center').pack(pady=(40, 16))
 
         tk.Button(inner, text=t('btn_bulk_keep_delete', n=total_files - n_groups),
                   bg='#f44336', fg='white',
-                  font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'),
+                  font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE, 'bold'),
                   command=lambda: self._bulk_keep_and_delete(tab_data, group_indices)).pack(pady=6)
 
         tk.Button(inner, text=t('btn_bulk_dismiss', n=n_groups),
@@ -256,11 +256,11 @@ class ResultPanel(tk.Frame):
         dlg.protocol('WM_DELETE_WINDOW', lambda: None)
 
         tk.Label(dlg, text=t('dlg_msg_processing_groups', n=len(group_indices)),
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE)).pack(padx=24, pady=(16, 8))
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE)).pack(padx=24, pady=(16, 8))
 
         count_var = tk.StringVar(value='')
         tk.Label(dlg, textvariable=count_var,
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1),
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 1),
                  foreground='#555555').pack()
 
         prog = ttk.Progressbar(dlg, mode='indeterminate', length=320)
@@ -269,7 +269,7 @@ class ResultPanel(tk.Frame):
 
         file_var = tk.StringVar(value=t('status_analyzing_originals'))
         tk.Label(dlg, textvariable=file_var,
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2),
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 2),
                  foreground='#888888', width=44).pack(padx=24, pady=(0, 16))
 
         dlg.update_idletasks()
@@ -401,7 +401,7 @@ class ResultPanel(tk.Frame):
             if multi:
                 lbl = tk.Label(outer,
                                text=t('label_group_separator', idx=group_idx + 1, n=len(group)),
-                               font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1),
+                               font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 1),
                                foreground='#888888', anchor='w')
                 lbl.pack(fill='x', padx=6, pady=(4, 2))
                 lbl.bind('<MouseWheel>', _scroll)

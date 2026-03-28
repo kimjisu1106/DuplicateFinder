@@ -6,7 +6,7 @@ import tkinter as tk
 import webbrowser
 from tkinter import ttk, messagebox
 from pathlib import Path
-from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
+from . import theme
 from .i18n import t
 
 
@@ -156,7 +156,7 @@ class ScanPanel(tk.LabelFrame):
 
         bmc = tk.Label(row0, text=t('label_sponsor'), cursor='hand2',
                        background='#FFDD00', foreground='#000000',
-                       font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1, 'bold'),
+                       font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 1, 'bold'),
                        padx=8, pady=3, relief='flat')
         bmc.pack(side='right', padx=(4, 0))
         bmc.bind('<Button-1>', lambda e: webbrowser.open('https://kimlog0415.github.io/contact/'))
@@ -216,7 +216,7 @@ class ScanPanel(tk.LabelFrame):
         tk.Label(self._threshold_frame, text=t('label_sensitivity')).pack(side='left', padx=(0, 4), anchor='n', pady=(2, 0))
 
         slider_wrap = tk.Frame(self._threshold_frame)
-        slider_wrap.pack(side='left')
+        slider_wrap.pack(side='left', pady=(3, 0))
 
         self._threshold_var = tk.IntVar(value=10)
         self._slider = tk.Scale(slider_wrap, from_=0, to=20, orient='horizontal',
@@ -226,9 +226,9 @@ class ScanPanel(tk.LabelFrame):
         hint = tk.Frame(slider_wrap)
         hint.pack(fill='x')
         tk.Label(hint, text=t('label_strict'), foreground='#888888',
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2)).pack(side='left')
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 2)).pack(side='left')
         tk.Label(hint, text=t('label_loose'), foreground='#888888',
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2)).pack(side='right')
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 2)).pack(side='right')
 
         self._slider.bind('<Enter>', self._show_slider_tip)
         self._slider.bind('<Leave>', self._hide_slider_tip)
@@ -244,15 +244,17 @@ class ScanPanel(tk.LabelFrame):
         self._scan_btn = tk.Button(self._row_btns, text=t('btn_scan_start'),
                                    command=self._start_scan, width=12,
                                    bg='#4CAF50', fg='white',
-                                   font=(APP_FONT_FAMILY, APP_FONT_SIZE, 'bold'))
+                                   font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE, 'bold'))
         self._scan_btn.pack(side='left', padx=(0, 6))
 
         self._pause_btn = tk.Button(self._row_btns, text=t('btn_pause'),
-                                    command=self._toggle_pause, width=10, state='disabled')
+                                    command=self._toggle_pause, width=10, state='disabled',
+                                    bg='#F59E0B')
         self._pause_btn.pack(side='left', padx=(0, 6))
 
         self._cancel_btn = tk.Button(self._row_btns, text=t('btn_cancel_scan'),
-                                     command=self._cancel_scan, width=8, state='disabled')
+                                     command=self._cancel_scan, width=8, state='disabled',
+                                     bg='#6B7280')
         self._cancel_btn.pack(side='left')
 
         # ── Row 4-6: 진행 상황 ───────────────────────────────────────
@@ -266,16 +268,16 @@ class ScanPanel(tk.LabelFrame):
         row5.pack(fill='x', pady=(2, 0))
         self._count_var = tk.StringVar(value='')
         tk.Label(row5, textvariable=self._count_var, anchor='w',
-                 foreground='#333333', font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1)).pack(side='left')
+                 foreground='#333333', font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 1)).pack(side='left')
         self._eta_var = tk.StringVar(value='')
         tk.Label(row5, textvariable=self._eta_var, anchor='e',
-                 foreground='#555555', font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1)).pack(side='right')
+                 foreground='#555555', font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 1)).pack(side='right')
 
         row6 = tk.Frame(self)
         row6.pack(fill='x')
         self._status_var = tk.StringVar(value='')
         tk.Label(row6, textvariable=self._status_var, anchor='w',
-                 foreground='#888888', font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2)).pack(side='left')
+                 foreground='#888888', font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 2)).pack(side='left')
 
     # ── 슬라이더 툴팁 ────────────────────────────────────────────────
 
@@ -285,7 +287,7 @@ class ScanPanel(tk.LabelFrame):
         self._place_tip(event)
         tk.Label(tw, text=str(self._threshold_var.get()),
                  background='#ffffe0', relief='solid', borderwidth=1,
-                 font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1), padx=4).pack()
+                 font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 1), padx=4).pack()
 
     def _hide_slider_tip(self, event):
         if self._tip_window:

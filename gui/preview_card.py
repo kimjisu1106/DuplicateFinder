@@ -10,7 +10,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 from PIL import Image, ImageTk
-from .theme import APP_FONT_FAMILY, APP_FONT_SIZE
+from . import theme
 from .i18n import t
 
 THUMB_SIZE = (200, 200)
@@ -68,12 +68,12 @@ class PreviewCard(tk.Frame):
         # 파일명
         name = self.filepath.name
         display_name = name if len(name) <= 22 else name[:19] + '...'
-        tk.Label(self, text=display_name, font=(APP_FONT_FAMILY, APP_FONT_SIZE - 1, 'bold'),
+        tk.Label(self, text=display_name, font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 1, 'bold'),
                  wraplength=200, justify='center').pack()
 
         # 메타 정보
         info = self._get_info()
-        tk.Label(self, text=info, font=(APP_FONT_FAMILY, APP_FONT_SIZE - 2),
+        tk.Label(self, text=info, font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 2),
                  foreground='#666666', justify='center').pack()
 
         # 영상/오디오: 재생 버튼
@@ -90,18 +90,18 @@ class PreviewCard(tk.Frame):
             thumb_label.pack(padx=4, pady=(6, 2))
             self._load_thumbnail(thumb_label)
         else:
-            tk.Label(self, text='🖼', font=(APP_FONT_FAMILY, 24),
+            tk.Label(self, text='🖼', font=(theme.APP_FONT_FAMILY, 24),
                      cursor='hand2', foreground='#aaaaaa').pack(padx=4, pady=(6, 2),
                      ipadx=60, ipady=40)
 
     def _build_video_placeholder(self):
-        lbl = tk.Label(self, text='🎬', font=(APP_FONT_FAMILY, 36),
+        lbl = tk.Label(self, text='🎬', font=(theme.APP_FONT_FAMILY, 36),
                        foreground='#aaaaaa', background='#2b2b2b',
                        width=14, height=6)
         lbl.pack(padx=4, pady=(6, 2))
 
     def _build_audio_placeholder(self):
-        lbl = tk.Label(self, text='🎵', font=(APP_FONT_FAMILY, 36),
+        lbl = tk.Label(self, text='🎵', font=(theme.APP_FONT_FAMILY, 36),
                        foreground='#aaaaaa', background='#2b2b2b',
                        width=14, height=6)
         lbl.pack(padx=4, pady=(6, 2))
