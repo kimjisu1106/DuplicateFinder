@@ -7,7 +7,7 @@ import webbrowser
 from tkinter import ttk, messagebox
 from pathlib import Path
 from . import theme
-from .i18n import t
+from .i18n import t, get_language
 
 
 def _ask_folder(parent, title: str, initialdir: Path = None) -> str | None:
@@ -150,8 +150,10 @@ class ScanPanel(tk.LabelFrame):
         row0.pack(fill='x', pady=(0, 6))
 
         # 우측 버튼 먼저 팩 (공간 부족 시 path label이 줄어들도록)
+        _opposite_font = 'Malgun Gothic' if get_language() == 'en' else 'Segoe UI'
         self._lang_btn = tk.Button(row0, text=t('btn_lang_toggle'),
-                                   command=self._on_lang_toggle, width=8)
+                                   command=self._on_lang_toggle, width=8,
+                                   font=(_opposite_font, theme.APP_FONT_SIZE))
         self._lang_btn.pack(side='right', padx=(4, 0))
 
         bmc = tk.Label(row0, text=t('label_sponsor'), cursor='hand2',
