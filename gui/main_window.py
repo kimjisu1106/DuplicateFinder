@@ -38,31 +38,21 @@ class MainWindow(tk.Tk):
                 pass
 
     def _build(self):
-        # 언어 전환 버튼 (우상단)
-        self._top_bar = tk.Frame(self)
-        self._top_bar.pack(fill='x', padx=10, pady=(6, 0))
-        self._lang_btn = tk.Button(self._top_bar, text=t('btn_lang_toggle'),
-                                   command=self._toggle_language, width=8)
-        self._lang_btn.pack(side='right')
-
-        # 스캔 패널
         self._scan_panel = ScanPanel(
             self,
             on_scan=self._on_scan,
             on_cancel=self._on_cancel,
             on_pause=self._on_pause,
+            on_lang_toggle=self._toggle_language,
         )
-        self._scan_panel.pack(fill='x', padx=10, pady=(4, 4))
+        self._scan_panel.pack(fill='x', padx=10, pady=(10, 4))
 
-        # 결과 패널
         self._result_panel = ResultPanel(self)
         self._result_panel.pack(fill='both', expand=True, padx=10, pady=(4, 10))
 
     def _toggle_language(self):
         new_lang = 'en' if get_language() == 'ko' else 'ko'
         set_language(new_lang)
-        # 재시작 없이 즉시 반영하려면 위젯을 다시 그려야 하므로 윈도우 재빌드
-        self._top_bar.destroy()
         self._scan_panel.destroy()
         self._result_panel.destroy()
         self._build()
