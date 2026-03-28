@@ -1,0 +1,5 @@
+# PyInstaller 빌드 산출물
+build/
+dist/
+__pycache__/
+*.pyc
