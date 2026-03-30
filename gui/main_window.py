@@ -29,7 +29,7 @@ class MainWindow(tk.Tk):
 
         self._apply_global_font()
         self._scanner = Scanner()
-        self._last_scan_results: tuple | None = None  # (exact_groups, similar_groups, total)
+        self._has_results = False
         self._build()
 
     def _apply_global_font(self):
@@ -59,20 +59,24 @@ class MainWindow(tk.Tk):
         self._result_panel.pack(fill='both', expand=True, padx=10, pady=(4, 10))
 
     def _toggle_language(self):
+        if self._has_results:
+            msg = ('언어를 전환하면 현재 스캔 결과가 사라집니다.\n계속하시겠습니까?'
+                   if get_language() == 'ko' else
+                   'Switching language will clear the current scan results.\nContinue?')
+            if not messagebox.askyesno('언어 전환' if get_language() == 'ko' else 'Switch Language', msg):
+                return
         new_lang = 'en' if get_language() == 'ko' else 'ko'
         set_language(new_lang)
         self._apply_global_font()
         self._scan_panel.destroy()
         self._result_panel.destroy()
+        self._has_results = False
         self._build()
-        if self._last_scan_results:
-            exact, similar, total = self._last_scan_results
-            self._result_panel.show_results(exact, similar, total)
 
     def _on_scan(self, folder: Path, recursive: bool, threshold: int, similar: bool,
                  include_images: bool = True, include_videos: bool = False,
                  include_audio: bool = False, include_all: bool = False):
-        self._last_scan_results = None
+        self._has_results = False
         self._result_panel.clear()
         self._scan_panel.set_scanning(True)
         self._scanner.start(folder, recursive, threshold, similar,
@@ -80,7 +84,7 @@ class MainWindow(tk.Tk):
         self._poll_queue()
 
     def _finish_scan(self, exact_groups, similar_groups, total):
-        self._last_scan_results = (exact_groups, similar_groups, total)
+        self._has_results = True
         self._result_panel.show_results(exact_groups, similar_groups, total)
         self._scan_panel.set_processing(False)
         self._scan_panel.set_status(t('status_scan_complete'))
