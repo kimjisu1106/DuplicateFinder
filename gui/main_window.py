@@ -29,6 +29,7 @@ class MainWindow(tk.Tk):
 
         self._apply_global_font()
         self._scanner = Scanner()
+        self._last_scan_results: tuple | None = None  # (exact_groups, similar_groups, total)
         self._build()
 
     def _apply_global_font(self):
@@ -64,10 +65,14 @@ class MainWindow(tk.Tk):
         self._scan_panel.destroy()
         self._result_panel.destroy()
         self._build()
+        if self._last_scan_results:
+            exact, similar, total = self._last_scan_results
+            self._result_panel.show_results(exact, similar, total)
 
     def _on_scan(self, folder: Path, recursive: bool, threshold: int, similar: bool,
                  include_images: bool = True, include_videos: bool = False,
                  include_audio: bool = False, include_all: bool = False):
+        self._last_scan_results = None
         self._result_panel.clear()
         self._scan_panel.set_scanning(True)
         self._scanner.start(folder, recursive, threshold, similar,
@@ -75,6 +80,7 @@ class MainWindow(tk.Tk):
         self._poll_queue()
 
     def _finish_scan(self, exact_groups, similar_groups, total):
+        self._last_scan_results = (exact_groups, similar_groups, total)
         self._result_panel.show_results(exact_groups, similar_groups, total)
         self._scan_panel.set_processing(False)
         self._scan_panel.set_status(t('status_scan_complete'))
