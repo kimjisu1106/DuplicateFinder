@@ -18,7 +18,7 @@
 - **민감도 조절** — 유사 이미지 탐지 임계값 슬라이더
 - **안전한 삭제** — 휴지통으로 이동 (복구 가능)
 - **원본 자동 추천** — 해상도 > 파일 크기 > 날짜 기준
-- **한/영 UI 전환** — 스캔 결과를 유지한 채 언어 전환 가능
+- **한/영 UI 전환** — 스캔 결과가 있을 경우 전환 전 경고 다이얼로그 표시
 - **스캔 일시중지 / 재개 / 취소**
 
 ### 다운로드 및 실행
@@ -66,7 +66,7 @@ Detects exact duplicates (MD5 hash) and visually similar images (pHash), lets yo
 - **Sensitivity slider** — Adjust similarity threshold
 - **Safe deletion** — Files moved to Trash (recoverable)
 - **Auto original recommendation** — Resolution > File size > Date
-- **Korean / English UI toggle** — scan results are preserved when switching language
+- **Korean / English UI toggle** — warns before clearing scan results when switching language
 - **Pause / Resume / Cancel scan**
 
 ### Download & Run
