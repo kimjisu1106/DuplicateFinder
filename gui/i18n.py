@@ -5,12 +5,6 @@ i18n.py — 한국어 / 영어 텍스트 딕셔너리 + t() 함수
 _LANG = 'ko'
 
 _STRINGS: dict[str, dict[str, str]] = {
-    # ── 폴더 선택 다이얼로그 ─────────────────────────────────────────
-    'dlg_title_folder_select':      {'ko': '폴더 선택',             'en': 'Select Folder'},
-    'btn_navigate_up':              {'ko': '▲ 위로',                'en': '▲ Up'},
-    'btn_confirm':                  {'ko': '확인',                   'en': 'OK'},
-    'btn_cancel':                   {'ko': '취소',                   'en': 'Cancel'},
-
     # ── 스캔 설정 패널 ───────────────────────────────────────────────
     'label_frame_scan_settings':    {'ko': ' 스캔 설정 ',            'en': ' Scan Settings '},
     'label_folder':                 {'ko': '폴더:',                  'en': 'Folder:'},

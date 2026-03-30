@@ -12,7 +12,7 @@
 | 실행 | `python main.py` |
 | 배포 | `dist/DuplicateFinder.exe` (PyInstaller, ~53MB) |
 | 최초 구현 | 2026-03-22 |
-| 마지막 업데이트 | 2026-03-29 |
+| 마지막 업데이트 | 2026-03-30 |
 
 ---
 
