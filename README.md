@@ -48,7 +48,7 @@ pyinstaller DuplicateFinder.spec
 
 이 앱이 도움이 됐다면 커피 한 잔으로 응원해주세요 ☕
 
-[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://kimlog0415.github.io/contact/)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://kimlog1203.netlify.app/contact/)
 
 ---
 
@@ -96,7 +96,7 @@ Output: `dist/DuplicateFinder.exe`
 
 If this app was helpful, consider buying me a coffee ☕
 
-[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://kimlog0415.github.io/contact/)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://kimlog1203.netlify.app/contact/)
 
 ---
 
