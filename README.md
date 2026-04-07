@@ -28,6 +28,13 @@ Python 설치 없이 바로 실행 가능합니다.
 1. [Releases](../../releases) 페이지에서 최신 `DuplicateFinder.exe` 다운로드
 2. 더블클릭으로 실행
 
+### 백신 오진 안내
+
+일부 백신(알약 등)에서 랜섬웨어로 오진할 수 있습니다.
+파일을 대량으로 읽고 삭제하는 동작 패턴이 랜섬웨어와 유사하게 보이기 때문이며, 실제 악성코드가 아닙니다.
+소스 코드는 이 저장소에서 직접 확인하실 수 있습니다.
+오진 발생 시 백신의 예외 목록에 추가하시거나, 소스에서 직접 빌드해 사용하세요.
+
 ### 소스에서 실행
 
 ```bash
@@ -75,6 +82,13 @@ No Python installation required.
 
 1. Download the latest `DuplicateFinder.exe` from the [Releases](../../releases) page
 2. Double-click to run
+
+### Antivirus False Positive
+
+Some antivirus software (e.g. ALYac) may flag this app as ransomware.
+This is a false positive — the app reads many files for hash comparison and moves files to Trash, which can resemble ransomware behavior.
+The full source code is available in this repository for inspection.
+If flagged, add the exe to your antivirus exception list or build from source.
 
 ### Run from Source
 
