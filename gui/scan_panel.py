@@ -47,7 +47,7 @@ class ScanPanel(tk.LabelFrame):
                        font=(theme.APP_FONT_FAMILY, theme.APP_FONT_SIZE - 1, 'bold'),
                        padx=8, pady=3, relief='flat')
         bmc.pack(side='right', padx=(4, 0))
-        bmc.bind('<Button-1>', lambda e: webbrowser.open('https://kimlog1203.netlify.app/contact/'))
+        bmc.bind('<Button-1>', lambda e: webbrowser.open('https://kimlog.pages.dev/contact/'))
 
         self._folder_btn = tk.Button(row0, text=t('btn_choose_folder'),
                                      command=self._choose_folder, width=10)
