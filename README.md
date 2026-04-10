@@ -16,6 +16,7 @@
 - **파일 종류 선택** — 이미지 / 영상 / 오디오 / 전체 파일 선택 가능
 - **하위 폴더 포함** 옵션
 - **민감도 조절** — 유사 이미지 탐지 임계값 슬라이더
+- **파일 위치 열기** — 미리보기 클릭 시 파일 탐색기에서 해당 파일 선택하여 열기
 - **안전한 삭제** — 휴지통으로 이동 (복구 가능)
 - **원본 자동 추천** — 해상도 > 파일 크기 > 날짜 기준
 - **한/영 UI 전환** — 스캔 결과가 있을 경우 전환 전 경고 다이얼로그 표시
@@ -71,6 +72,7 @@ Detects exact duplicates (MD5 hash) and visually similar images (pHash), lets yo
 - **File type filter** — Images / Videos / Audio / All files
 - **Recursive scan** — Include subfolders option
 - **Sensitivity slider** — Adjust similarity threshold
+- **Reveal in Explorer** — Click any preview to open the file's location in Explorer with it selected
 - **Safe deletion** — Files moved to Trash (recoverable)
 - **Auto original recommendation** — Resolution > File size > Date
 - **Korean / English UI toggle** — warns before clearing scan results when switching language

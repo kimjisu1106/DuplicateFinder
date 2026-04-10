@@ -32,6 +32,19 @@ def open_with_default_viewer(filepath: Path):
         pass
 
 
+def reveal_in_explorer(filepath: Path):
+    """파일 탐색기에서 해당 파일을 선택한 채로 폴더 열기."""
+    try:
+        if sys.platform == 'win32':
+            subprocess.Popen(f'explorer /select,"{filepath}"')
+        elif sys.platform == 'darwin':
+            subprocess.run(['open', '-R', str(filepath)], check=False)
+        else:
+            subprocess.run(['xdg-open', str(filepath.parent)], check=False)
+    except Exception:
+        pass
+
+
 def format_size(size_bytes: int) -> str:
     if size_bytes >= 1024 * 1024:
         return f"{size_bytes / (1024 * 1024):.1f} MB"
@@ -78,7 +91,7 @@ class PreviewCard(tk.Frame):
 
         # 영상/오디오: 재생 버튼
         if self._is_video() or self._is_audio():
-            tk.Button(self, text=t('btn_play'), command=lambda: open_with_default_viewer(self.filepath),
+            tk.Button(self, text=t('btn_play'), command=lambda: reveal_in_explorer(self.filepath),
                       width=10).pack(pady=(4, 2))
 
         # 체크박스
@@ -90,9 +103,10 @@ class PreviewCard(tk.Frame):
             thumb_label.pack(padx=4, pady=(6, 2))
             self._load_thumbnail(thumb_label)
         else:
-            tk.Label(self, text='🖼', font=(theme.APP_FONT_FAMILY, 24),
-                     cursor='hand2', foreground='#aaaaaa').pack(padx=4, pady=(6, 2),
-                     ipadx=60, ipady=40)
+            lbl = tk.Label(self, text='🖼', font=(theme.APP_FONT_FAMILY, 24),
+                           cursor='hand2', foreground='#aaaaaa')
+            lbl.pack(padx=4, pady=(6, 2), ipadx=60, ipady=40)
+            lbl.bind('<Button-1>', lambda e: reveal_in_explorer(self.filepath))
 
     def _build_video_placeholder(self):
         lbl = tk.Label(self, text='🎬', font=(theme.APP_FONT_FAMILY, 36),
@@ -115,10 +129,11 @@ class PreviewCard(tk.Frame):
             bg.paste(img, offset)
             self._photo = ImageTk.PhotoImage(bg)
             label.config(image=self._photo)
-            label.bind('<Button-1>', lambda e: open_with_default_viewer(self.filepath))
+            label.bind('<Button-1>', lambda e: reveal_in_explorer(self.filepath))
         except Exception:
             label.config(text=t('label_no_preview'), width=28, height=12,
-                         relief='sunken', foreground='#888888')
+                         relief='sunken', foreground='#888888', cursor='hand2')
+            label.bind('<Button-1>', lambda e: reveal_in_explorer(self.filepath))
 
     def _get_info(self) -> str:
         parts = []
