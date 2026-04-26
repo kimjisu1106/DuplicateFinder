@@ -50,7 +50,7 @@ def collect_files(folder: Path, recursive: bool,
     files = []
     if include_all:
         for p in folder.glob(pattern):
-            if p.is_file() and is_safe_path(folder, p):
+            if p.is_file() and p.stat().st_size > 0 and is_safe_path(folder, p):
                 files.append(p)
         return files
     exts = set()
@@ -61,7 +61,7 @@ def collect_files(folder: Path, recursive: bool,
     if include_audio:
         exts |= AUDIO_EXTENSIONS
     for p in folder.glob(pattern):
-        if p.is_file() and p.suffix.lower() in exts:
+        if p.is_file() and p.suffix.lower() in exts and p.stat().st_size > 0:
             if is_safe_path(folder, p):
                 files.append(p)
     return files
